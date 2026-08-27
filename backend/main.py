@@ -18,7 +18,7 @@ from fastapi.staticfiles import StaticFiles
 from . import config
 from .es_indexing import ensure_all_fuzzy_indices
 from .models import DEVICE, load_siglip2
-from .routes import export, facets, hierarchy, neighbors, playback, query_image, search, trake
+from .routes import export, facets, hierarchy, neighbors, playback, query_image, routing, search, trake
 from .search import asr as asr_mod
 from .search import caption as cap_mod
 from .search import keyframe as kf
@@ -52,10 +52,36 @@ async def lifespan(app: FastAPI):
     ensure_all_fuzzy_indices()
 
     print("[startup] all signals ready")
+
+    # Routing is an optional add-on signal, not required infrastructure like
+    # the FAISS indices/SigLIP2 weights above -- a missing key degrades to
+    # a clear per-request error (RoutingLLMError -> HTTP 502) scoped to that
+    # one route, rather than crashing the whole process the way a failed
+    # index/model load above would (see backend/search/routing.py).
+    if not config.GEMINI_API_KEY:
+        print("[startup][routing] GEMINI_API_KEY is not set -- the Routing signal will return an error until it is.")
+
     yield
 
 
 app = FastAPI(title="Routing101 by MiLF", lifespan=lifespan)
+
+
+@app.middleware("http")
+async def no_cache_for_frontend(request, call_next):
+    # StaticFiles sends no Cache-Control header of its own, so Chrome falls
+    # back to its normal heuristic disk-cache behavior for JS modules --
+    # in practice that means an edited frontend/js/*.js file can keep being
+    # served stale on a plain reload, only fixed by a hard refresh
+    # (Ctrl+Shift+R). Bit us twice in one session (a mid-dev app.js import,
+    # then a state.js bugfix) before this existed. Scoped to /app/ only --
+    # /media/ (thumbnails/video, potentially large + genuinely immutable
+    # per file) keeps the default caching behavior.
+    response = await call_next(request)
+    if request.url.path.startswith("/app/"):
+        response.headers["Cache-Control"] = "no-store"
+    return response
+
 
 app.include_router(search.router)
 app.include_router(facets.router)
@@ -65,6 +91,7 @@ app.include_router(query_image.router)
 app.include_router(trake.router)
 app.include_router(hierarchy.router)
 app.include_router(export.router)
+app.include_router(routing.router)
 
 # Media: served directly from the existing AICData* directories, no copying.
 app.mount("/media/keyframes", StaticFiles(directory=config.THUMBNAIL_ROOT), name="keyframes")

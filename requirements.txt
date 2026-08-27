@@ -31,3 +31,8 @@ fastapi>=0.110
 uvicorn>=0.29
 python-multipart>=0.0.9
 cachetools>=5.3
+
+# LLM Query Routing (backend/search/routing.py) -- Gemini client for Step 1.
+# Pin a specific version once installed; re-check its README for the exact
+# generate_content()/response_schema kwargs before wiring routing.py.
+google-genai

@@ -28,6 +28,10 @@ export const searchHierarchy = (body) => postJson("/api/search/hierarchy", body)
 export const expandHierarchy = (body) => postJson("/api/hierarchy/expand", body);
 export const getFacets = () => jsonFetch("/api/facets");
 
+export const startRoutingJob = (body) => postJson("/api/routing/search", body);
+export const getRoutingJob = (jobId) => jsonFetch(`/api/routing/jobs/${jobId}`);
+export const listRoutingJobs = () => jsonFetch("/api/routing/jobs");
+
 export function getNeighbors(videoId, centerN, before, after) {
     const qs = new URLSearchParams({ video_id: videoId, center_n: centerN, before, after });
     return jsonFetch(`/api/neighbors?${qs}`);

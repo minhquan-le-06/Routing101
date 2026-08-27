@@ -12,7 +12,7 @@ import os
 from pathlib import Path
 
 FETCH_K = 100      # candidates pulled per leg, gives RRF a real pool to fuse
-DISPLAY_N = 30
+DISPLAY_N = 100
 RRF_K = 60
 NEIGHBOR_WINDOW = 7  # "show more" popup: +/- this many frames by frame id
 TOP_G_DEFAULT = 5   # Hierarchy Search: frames kept per video after drill-down (Top-G)
@@ -76,6 +76,24 @@ ES_INDEX_SUMMARY = "summary_videos"
 # single startup -- see backend/main.py's lifespan, which calls
 # tune_thread_pools() exactly once.
 CPU_BUDGET = max(1, (os.cpu_count() or 4) - 2)  # leave headroom for uvicorn/OS
+
+
+# --- LLM-based Query Routing (backend/search/routing.py, backend/routes/routing.py) ---
+# Deliberate deviation from this file's "hardcode everything" convention
+# (see module docstring): an API key must never be hardcoded/committed, so
+# it's the one value read from the environment.
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+GEMINI_MODEL_NAME = "gemini-3.5-flash-lite"  # verify this exact model id against the current Gemini API model list before first run
+GEMINI_TIMEOUT_SEC = 20
+
+ROUTING_MAX_KEYWORDS = 10
+ROUTING_MAX_PARAPHRASINGS = 10         # per keyword -- worst case 10*10*4 = 400 searches/job (was 100 at the old 5/5 cap); still a plain sequential loop (see backend/search/routing.py), just a longer one
+ROUTING_ALL_MODALITIES = ("visual", "asr", "caption", "ocr")
+ROUTING_PER_RUN_TOP_K = 100            # k passed to each individual search_* call in Step 2 -- must cover the full rank-100 scoring window used by Step 3 (rank 1-30 -> 2 pts, 31-100 -> 1 pt); a frame ranked below this k never scores at all
+ROUTING_FINAL_TOP_N = 50               # Step 3 output size (spec: "~50")
+ROUTING_JOB_TTL_SEC = 1800             # 30 min -- long enough to "check back later", short enough to bound memory
+ROUTING_JOB_CACHE_MAXSIZE = 200        # generous vs. the 10-job concurrency cap so finished jobs aren't evicted early
+ROUTING_MAX_CONCURRENT_JOBS = 10
 
 
 def tune_thread_pools(device: str) -> None:

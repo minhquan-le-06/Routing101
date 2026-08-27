@@ -15,6 +15,7 @@ import * as summary from "./signals/summary.js";
 import * as mixed from "./signals/mixed.js";
 import * as trake from "./signals/trake.js";
 import * as hierarchy from "./signals/hierarchy.js";
+import * as routing from "./signals/routing.js";
 
 const SIGNALS = {
     Keyframe: keyframe,
@@ -25,6 +26,7 @@ const SIGNALS = {
     Mixed: mixed,
     TRAKE: trake,
     Hierarchy: hierarchy,
+    Routing: routing,
 };
 
 const resultsEl = document.getElementById("results");

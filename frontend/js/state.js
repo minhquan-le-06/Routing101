@@ -93,6 +93,20 @@ export const trakeState = {
 // other group and of the sidebar's Top-G control.
 export const hierExtraG = new Map(); // video_id -> extra G (multiples of 10)
 
+// ---------------------------------------------------------------------------
+// LLM-based Query Routing -- in-memory only, deliberately NOT persisted to
+// localStorage (mirrors the backend's in-memory job store: a page refresh
+// loses this client-side Map, but signals/routing.js repopulates it from
+// GET /api/routing/jobs on load, so running/recently-finished jobs are
+// recovered from the server -- only the 30-minute server-side TTL is a
+// hard cutoff).
+// ---------------------------------------------------------------------------
+
+export const routingState = {
+    jobs: new Map(),       // job_id -> RoutingJobStatus (see backend/routes/routing.py)
+    selectedJobId: null,
+};
+
 export function getNeighborExtra(videoId, centerN) {
     const key = `${videoId}_${centerN}`;
     if (!state.neighborExtra.has(key)) {
@@ -106,12 +120,21 @@ export function getNeighborExtra(videoId, centerN) {
 // "Exclude" checkbox (drop the collection range instead of restricting to
 // it) only has to be wired up here, not independently in six signal files.
 export function scopeFilters() {
+    const useCollection = document.getElementById("use-collection-scope").checked;
+    const excludeCollection = document.getElementById("exclude-collection-scope").checked;
     return {
         video_filter: document.getElementById("use-video-scope").checked
             ? document.getElementById("video-filter").value : "",
-        lot_filter: document.getElementById("use-collection-scope").checked
+        // "Exclude" is meaningless without a collection range active, but it
+        // must NOT require "Use collection" to also be checked -- that
+        // coupling was a silent-no-op trap (check "Exclude", forget "Use
+        // collection" -> lot_filter sent as "" -> backend's parse_lot_range
+        // returns None -> no filtering happens at all, and the "excluded"
+        // lot shows up completely normally). Either checkbox alone is now
+        // enough to activate the typed range.
+        lot_filter: (useCollection || excludeCollection)
             ? document.getElementById("lot-filter").value : "",
-        exclude_lot: document.getElementById("exclude-collection-scope").checked,
+        exclude_lot: excludeCollection,
         od_filter: document.getElementById("od-filter").value,
         facet_field: document.getElementById("facet-field").value,
         facet_value: document.getElementById("facet-field").value
