@@ -4,7 +4,7 @@ backend/config.py -- paths + constants shared by every backend module.
 Ported verbatim from ui/app.py's Config block (ui/app.py:70-134) -- see
 CLAUDE.md and the plan at the top of this rewrite for why these values are
 hardcoded here rather than in an env file (single-developer local scaffold,
-data lives outside the repo under absolute D:/University/Summ26/AICData*
+data lives outside the repo under absolute D:/University/Summ26/AICData/
 paths). Update these constants, not a config file, if the data moves.
 """
 
@@ -32,7 +32,7 @@ TOP_G_DEFAULT = 10   # Hierarchy Search: frames kept per video after drill-down 
 # ---------------------------------------------------------------------------
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-_EXTRACTED = Path("D:/University/Summ26/AICDataExtracted")
+_EXTRACTED = Path("D:/University/Summ26/AICData/extracted")
 
 EMBED_PROFILE = os.getenv("R101_EMBED", "768")
 
@@ -40,10 +40,10 @@ _PROFILES = {
     "768": dict(
         dim=768,
         model_id="google/siglip2-base-patch16-384",
-        frame_glob=str(_EXTRACTED / "siglib_embed" / "*.npy"),
-        asr_dir=_EXTRACTED / "transcript_embed",   # was asr_embed
-        caption_dir=_EXTRACTED / "caption_embed",  # was siglip_caption
-        summary_embed_dir=_EXTRACTED / "summary_embed",
+        frame_glob=str(_EXTRACTED / "768embed" / "768keyframe" / "*.npy"),
+        asr_dir=_EXTRACTED / "768embed" / "768transcript",
+        caption_dir=_EXTRACTED / "768embed" / "768caption",
+        summary_embed_dir=_EXTRACTED / "768embed" / "768summary",
         summary_chunked=False,
         index_sub=".",  # index/routing101_* -- the original on-disk layout
     ),
@@ -105,7 +105,7 @@ SUMMARY_DIR = _EXTRACTED / "summaries"
 # filtered-detections CSVs produced upstream by AICPreprocess/filter_apply.py
 # (outside this repo) plus the offline class vocabulary built from them by
 # pipeline/build_class_vocab.py.
-FILTERED_OBJECT_DIR = Path("D:/University/Summ26/AICDataExtracted/filtered_object")
+FILTERED_OBJECT_DIR = _EXTRACTED / "filtered_objects"
 CLASS_VOCAB_CSV = FILTERED_OBJECT_DIR / "class_vocab.csv"
 
 MAP_KEYFRAMES_DIR = Path("D:/University/Summ26/AICData/map-keyframes")

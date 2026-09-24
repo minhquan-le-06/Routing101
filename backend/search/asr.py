@@ -23,7 +23,7 @@ _meta: pd.DataFrame = None
 def build_siglip_asr_index():
     global _index, _meta
     if not (config.SIGLIP_ASR_FAISS.exists() and config.SIGLIP_ASR_META.exists()):
-        # transcript_embed/{video_id}.npy + {video_id}.csv (was asr_embed/
+        # 768embed/768transcript/{video_id}.npy + {video_id}.csv (was asr_embed/
         # {video_id}_asr_siglip768.npy + _frames.csv before the rename).
         npy_paths = sorted(config.ASR_EMBED_DIR.glob("*.npy"))
         index = faiss.IndexFlatIP(config.EMBED_DIM)

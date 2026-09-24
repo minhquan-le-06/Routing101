@@ -23,7 +23,7 @@ _meta: pd.DataFrame = None
 def build_siglip_caption_index():
     global _index, _meta
     if not (config.SIGLIP_CAPTION_FAISS.exists() and config.SIGLIP_CAPTION_META.exists()):
-        # caption_embed/{video_id}.npy + {video_id}.csv (was siglip_caption/
+        # 768embed/768caption/{video_id}.npy + {video_id}.csv (was siglip_caption/
         # {video_id}_caption_siglip768.npy + _frames.csv before the rename).
         npy_paths = sorted(config.SIGLIP_CAPTION_DIR.glob("*.npy"))
         index = faiss.IndexFlatIP(config.EMBED_DIM)

@@ -1,10 +1,10 @@
 """
 backend/od_filter.py -- OD (object-detection) text filter: fuzzy-matches
 free-text, comma-separated class tokens against the offline class
-vocabulary (pipeline/build_class_vocab.py -> filtered_object/class_vocab.csv)
+vocabulary (pipeline/build_class_vocab.py -> filtered_objects/class_vocab.csv)
 and applies the matched classes as an AND post-filter over an
 already-ranked result DataFrame, keeping only rows whose keyframe's OD
-detections (filtered_object/{video_id}.csv) include every matched class.
+detections (filtered_objects/{video_id}.csv) include every matched class.
 
 Call sites (backend/routes/search.py) always run this AFTER a signal's own
 ranking is final -- after RRF fusion for an RRF leg, after the raw score

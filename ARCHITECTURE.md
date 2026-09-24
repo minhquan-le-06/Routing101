@@ -42,10 +42,10 @@ of precomputed `.npy` files, and three FAISS index trees. Picked once from the
 | | `768` (default) | `1152` | `1536` |
 |---|---|---|---|
 | Checkpoint | `siglip2-base-patch16-384` | `siglip2-so400m-patch14-384` | `siglip2-giant-opt-patch16-384` |
-| Frames | `siglib_embed/` | `1152embed/1152keyframe/` | `1536embed/1536keyframe/` |
-| ASR | `transcript_embed/` | `1152embed/1152transcript/` | `1536embed/1536transcript/` |
-| Caption | `caption_embed/` | `1152embed/1152caption/` | `1536embed/1536caption/` |
-| Summary | `summary_embed/` | `1152embed/1152summary/` | `1536embed/1536summary/` |
+| Frames | `768embed/768keyframe/` | `1152embed/1152keyframe/` | `1536embed/1536keyframe/` |
+| ASR | `768embed/768transcript/` | `1152embed/1152transcript/` | `1536embed/1536transcript/` |
+| Caption | `768embed/768caption/` | `1152embed/1152caption/` | `1536embed/1536caption/` |
+| Summary | `768embed/768summary/` | `1152embed/1152summary/` | `1536embed/1536summary/` |
 | FAISS | `index/routing101_*` | `index/1152/routing101_*` | `index/1536/routing101_*` |
 | Resident | ~2.9 GB | ~5.5 GB | ~9.4 GB |
 | Launch | `run_768.bat` → `:8000` | `run_1152.bat` → `:8001` | `run_1536.bat` → `:8002` |

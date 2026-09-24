@@ -1,11 +1,11 @@
 """
 pipeline/build_class_vocab.py -- offline, run-once preprocessing for the OD
 (object-detection) text filter (see backend/od_filter.py). Scans every
-per-video OD-detections CSV under AICDataExtracted/filtered_object/*.csv
+per-video OD-detections CSV under AICData/extracted/filtered_objects/*.csv
 (produced upstream by AICPreprocess/filter_apply.py, outside this repo --
 one row per surviving detection, `class_name` is the Open Images label),
 collects the unique class names, normalizes them, and writes the result as
-a flat list to AICDataExtracted/filtered_object/class_vocab.csv.
+a flat list to AICData/extracted/filtered_objects/class_vocab.csv.
 
 Normalization is intentionally light -- lowercase + collapsed whitespace
 only, no plural-stripping. Open Images class names include plural-looking
@@ -18,7 +18,7 @@ to normalize plurals away up front.
 
 Run once:
     python pipeline/build_class_vocab.py
-Re-run only if the filtered_object/*.csv source data changes -- it
+Re-run only if the filtered_objects/*.csv source data changes -- it
 overwrites class_vocab.csv each time (same idempotent-rebuild spirit as
 the FAISS/ES index builders in backend/, just without the exists()-guard
 since this is a manual, occasional step rather than an eager startup one).

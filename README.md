@@ -22,19 +22,19 @@ export flow, etc.), see [`ARCHITECTURE.md`](ARCHITECTURE.md) instead.
 
 - **Python** 3.11+ (developed against 3.14; nothing in `requirements.txt`
   pins a floor, but don't go below 3.10 -- `torch>=2.8.0` won't install).
-- **The data.** This repo ships no data at all -- get the `AICData` +
-  `AICDataExtracted` folders from the team (shared drive/bucket, ask
+- **The data.** This repo ships no data at all -- get the `AICData` folder
+  (raw data + the `extracted/` subfolder) from the team (shared drive/bucket, ask
   whoever last ran the pipeline). Both tracks below need these, just
   staged in different places. The exact subfolders you need:
 
   Shared by both embedding profiles (see the next section):
 
   ```
-  AICDataExtracted/transcripts/                     raw ASR segments (bulk-indexed into ES)
-  AICDataExtracted/captions/                        raw frame captions (bulk-indexed into ES)
-  AICDataExtracted/ocr/                             per-frame OCR text (bulk-indexed into ES)
-  AICDataExtracted/summaries/                       one-paragraph video summaries (raw text)
-  AICDataExtracted/filtered_object/ (+class_vocab.csv)  per-frame OD detections + vocabulary
+  AICData/extracted/transcripts/                     raw ASR segments (bulk-indexed into ES)
+  AICData/extracted/captions/                        raw frame captions (bulk-indexed into ES)
+  AICData/extracted/ocr/                             per-frame OCR text (bulk-indexed into ES)
+  AICData/extracted/summaries/                       one-paragraph video summaries (raw text)
+  AICData/extracted/filtered_objects/ (+class_vocab.csv)  per-frame OD detections + vocabulary
   AICData/map-keyframes/*.csv                       per-frame timestamps + native frame_idx
   AICData/keyframes/{video_id}/{n:03d}.jpg           thumbnails
   AICData/video/{video_id}.mp4                       source video (playback dialogs)
@@ -43,10 +43,10 @@ export flow, etc.), see [`ARCHITECTURE.md`](ARCHITECTURE.md) instead.
   Embeddings for the **768-dim** profile (the default):
 
   ```
-  AICDataExtracted/siglib_embed/*.npy               frame embeddings
-  AICDataExtracted/transcript_embed/                ASR-segment embeddings + .csv
-  AICDataExtracted/caption_embed/                   caption embeddings + .csv
-  AICDataExtracted/summary_embed/                   summary embeddings (app fills this itself)
+  AICData/extracted/768embed/768keyframe/*.npy frame embeddings
+  AICData/extracted/768embed/768transcript/      ASR-segment embeddings + .csv
+  AICData/extracted/768embed/768caption/         caption embeddings + .csv
+  AICData/extracted/768embed/768summary/         summary embeddings (app fills this itself)
   ```
 
   Embeddings for the **1152-dim** and **1536-dim** profiles — only needed
@@ -54,18 +54,18 @@ export flow, etc.), see [`ARCHITECTURE.md`](ARCHITECTURE.md) instead.
   Identical layout, one folder per dimension:
 
   ```
-  AICDataExtracted/1152embed/1152keyframe/          frame embeddings
-  AICDataExtracted/1152embed/1152transcript/        ASR-segment embeddings + .csv
-  AICDataExtracted/1152embed/1152caption/           caption embeddings + .csv
-  AICDataExtracted/1152embed/1152summary/           summary embeddings (chunked) + .csv
+  AICData/extracted/1152embed/1152keyframe/          frame embeddings
+  AICData/extracted/1152embed/1152transcript/        ASR-segment embeddings + .csv
+  AICData/extracted/1152embed/1152caption/           caption embeddings + .csv
+  AICData/extracted/1152embed/1152summary/           summary embeddings (chunked) + .csv
 
-  AICDataExtracted/1536embed/1536keyframe/          frame embeddings
-  AICDataExtracted/1536embed/1536transcript/        ASR-segment embeddings + .csv
-  AICDataExtracted/1536embed/1536caption/           caption embeddings + .csv
-  AICDataExtracted/1536embed/1536summary/           summary embeddings (chunked) + .csv
+  AICData/extracted/1536embed/1536keyframe/          frame embeddings
+  AICData/extracted/1536embed/1536transcript/        ASR-segment embeddings + .csv
+  AICData/extracted/1536embed/1536caption/           caption embeddings + .csv
+  AICData/extracted/1536embed/1536summary/           summary embeddings (chunked) + .csv
   ```
 
-  `summary_embed/` and `index/` are write targets too (the app creates/
+  `768embed/768summary/` and `index/` are write targets too (the app creates/
   fills them itself on first run) -- just make sure the parent directory
   is writable. `1152embed/` and `1536embed/` are read-only: those
   embeddings come from the upstream pipeline, the app never generates them.
@@ -87,7 +87,7 @@ The app can run against any one of three SigLIP2 checkpoints. You pick one
 | | `768` (default) | `1152` | `1536` |
 |---|---|---|---|
 | Checkpoint | `siglip2-base-patch16-384` | `siglip2-so400m-patch14-384` | `siglip2-giant-opt-patch16-384` |
-| Embeddings | `siglib_embed/`, `transcript_embed/`, `caption_embed/`, `summary_embed/` | `1152embed/1152*/` | `1536embed/1536*/` |
+| Embeddings | `768embed/768*/` | `1152embed/1152*/` | `1536embed/1536*/` |
 | FAISS indices | `index/routing101_*` | `index/1152/routing101_*` | `index/1536/routing101_*` |
 | Port | 8000 | 8001 | 8002 |
 | Model download | ~1.4 GB | ~4.2 GB | ~7 GB |
@@ -219,7 +219,7 @@ The core app doesn't change for Kaggle -- same FastAPI process, same
 persistent disk with your data already on it, no Docker daemon for
 Elasticsearch, and no public port for a browser to reach.
 
-1. **Get the data onto Kaggle.** Package `AICData`/`AICDataExtracted` as
+1. **Get the data onto Kaggle.** Package `AICData` (incl. `AICData/extracted`) as
    a Kaggle Dataset (zip it and use "New Dataset", or "Add Data" in your
    notebook if a teammate already published one for the team) and attach
    it to your notebook. It mounts read-only under
