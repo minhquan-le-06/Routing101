@@ -7,9 +7,9 @@ rem   run.bat 1152   1152-dim  siglip2-so400m-patch14-384    http://localhost:80
 rem   run.bat 1536   1536-dim  siglip2-giant-opt-patch16-384 http://localhost:8002/app/
 rem
 rem   profile  model download  resident RAM  FAISS indices
-rem   768      ~1.4GB          ~2.8GB        index/routing101_*
-rem   1152     ~4.2GB          ~4-5GB        index/1152/routing101_*
-rem   1536     ~7GB            ~9.4GB        index/1536/routing101_*
+rem   768      ~1.4GB          ~2.8GB        index/768/
+rem   1152     ~4.2GB          ~4-5GB        index/1152/
+rem   1536     ~7GB            ~9.4GB        index/1536/
 rem
 rem The first run of a profile on a machine downloads its model and spends
 rem several minutes building that profile's FAISS indices; later runs just

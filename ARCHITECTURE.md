@@ -34,7 +34,7 @@ scripts/
   stop.bat [port]       stops one profile's backend, leaves ES running
 run.bat [768|1152|1536]  Windows entry point: picks profile + port, calls scripts/_run_common.bat
 index/                  generated FAISS indices + CSV metadata (git-ignored), rebuilt on first run
-                        (768 profile at index/routing101_*, 1152 and 1536 at index/<dim>/routing101_* -- see Embedding profiles)
+                        (one tree per profile: index/<dim>/{asr,caption,summary}/ -- see Embedding profiles)
 ```
 
 ## Embedding profiles
@@ -51,7 +51,7 @@ of precomputed `.npy` files, and three FAISS index trees. Picked once from the
 | ASR | `768embed/768transcript/` | `1152embed/1152transcript/` | `1536embed/1536transcript/` |
 | Caption | `768embed/768caption/` | `1152embed/1152caption/` | `1536embed/1536caption/` |
 | Summary | `768embed/768summary/` | `1152embed/1152summary/` | `1536embed/1536summary/` |
-| FAISS | `index/routing101_*` | `index/1152/routing101_*` | `index/1536/routing101_*` |
+| FAISS | `index/768/` | `index/1152/` | `index/1536/` |
 | Resident | ~2.9 GB | ~5.5 GB | ~9.4 GB |
 | Launch | `run.bat` → `:8000` | `run.bat 1152` → `:8001` | `run.bat 1536` → `:8002` |
 

@@ -88,7 +88,7 @@ The app can run against any one of three SigLIP2 checkpoints. You pick one
 |---|---|---|---|
 | Checkpoint | `siglip2-base-patch16-384` | `siglip2-so400m-patch14-384` | `siglip2-giant-opt-patch16-384` |
 | Embeddings | `768embed/768*/` | `1152embed/1152*/` | `1536embed/1536*/` |
-| FAISS indices | `index/routing101_*` | `index/1152/routing101_*` | `index/1536/routing101_*` |
+| FAISS indices | `index/768/` | `index/1152/` | `index/1536/` |
 | Port | 8000 | 8001 | 8002 |
 | Model download | ~1.4 GB | ~4.2 GB | ~7 GB |
 | RAM (measured) | ~2.8 GB | ~4-5 GB | ~9.4 GB |

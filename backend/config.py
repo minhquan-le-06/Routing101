@@ -45,7 +45,7 @@ _PROFILES = {
         caption_dir=_EXTRACTED / "768embed" / "768caption",
         summary_embed_dir=_EXTRACTED / "768embed" / "768summary",
         summary_chunked=False,
-        index_sub=".",  # index/routing101_* -- the original on-disk layout
+        index_sub="768",  # index/768/{asr,caption,summary}
     ),
     "1152": dict(
         dim=1152,
@@ -63,7 +63,7 @@ _PROFILES = {
         # every chunk and collapses to the best one per video at query
         # time; see backend/search/summary.py.
         summary_chunked=True,
-        index_sub="1152",  # index/1152/routing101_*
+        index_sub="1152",  # index/1152/{asr,caption,summary}
     ),
     "1536": dict(
         dim=1536,
@@ -76,7 +76,7 @@ _PROFILES = {
         # also says strategy=chunks_separate, and the giant checkpoint's
         # text tower is still capped at 64 tokens.
         summary_chunked=True,
-        index_sub="1536",  # index/1536/routing101_*
+        index_sub="1536",  # index/1536/{asr,caption,summary}
         # Unlike 1152, this profile's transcripts cover 859 videos, not 790
         # -- the upstream L25 ASR gap that 1152 has was filled before this
         # job ran.
@@ -114,9 +114,9 @@ VIDEO_DIR = Path("D:/University/Summ26/AICData/video")  # TRAKE playback dialog
 
 INDEX_DIR = REPO_ROOT / "index" / _P["index_sub"]
 PIPELINE_DIR = REPO_ROOT / "pipeline"  # rule/LLM-extracted per-lot metadata CSVs (backend/metadata_filter.py)
-ASR_INDEX_DIR = INDEX_DIR / "routing101_asr"
-CAPTION_INDEX_DIR = INDEX_DIR / "routing101_caption"
-SUMMARY_INDEX_DIR = INDEX_DIR / "routing101_summary"
+ASR_INDEX_DIR = INDEX_DIR / "asr"
+CAPTION_INDEX_DIR = INDEX_DIR / "caption"
+SUMMARY_INDEX_DIR = INDEX_DIR / "summary"
 ASR_INDEX_DIR.mkdir(parents=True, exist_ok=True)
 CAPTION_INDEX_DIR.mkdir(parents=True, exist_ok=True)
 SUMMARY_INDEX_DIR.mkdir(parents=True, exist_ok=True)
