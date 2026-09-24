@@ -1,6 +1,6 @@
 """
 backend/search/asr.py -- ASR signal: SigLIP2-ASR embeddings + Elasticsearch
-fuzzy, RRF. Ported from ui/app.py:415-555. Segment-level (the ES leg has no
+fuzzy, RRF. Segment-level (the ES leg has no
 direct frame_id), so RRF keys on segment_id; `n` is resolved per-leg
 (direct for SigLIP2-ASR, nearest-time for fuzzy) via attach_keyframe_asr.
 """
@@ -11,10 +11,10 @@ import pandas as pd
 from cachetools import TTLCache
 
 from .. import config
-from ..common import faiss_search_pooled, keyframe_timestamp, l2_normalize, nearest_keyframe_n_by_time, query_hash, video_id_from_filename
-from ..es_client import get_es_client
-from ..es_indexing import ensure_asr_fuzzy_index
-from ..models import is_image_query, siglip2_query_mat
+from ..core.es import ensure_asr_fuzzy_index, get_es_client
+from ..core.keyframes import keyframe_timestamp, nearest_keyframe_n_by_time
+from ..core.models import is_image_query, siglip2_query_mat
+from .common import faiss_search_pooled, l2_normalize, query_hash, video_id_from_filename
 
 _index = None
 _meta: pd.DataFrame = None
@@ -116,8 +116,8 @@ _exact_cache = TTLCache(maxsize=256, ttl=300)
 
 
 def _es_leg(query, k: int, es_query: dict, cache: TTLCache, label: str):
-    """Returns (df, warning). warning is a str (mirrors ui/app.py's
-    st.warning) if ES was unreachable, else None -- these legs need text,
+    """Returns (df, warning). warning is a user-facing str if ES was
+    unreachable, else None -- these legs need text,
     so an image query short-circuits to an empty df with no warning."""
     if is_image_query(query):
         return _EMPTY_ES, None

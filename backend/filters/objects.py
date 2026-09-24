@@ -1,5 +1,5 @@
 """
-backend/od_filter.py -- OD (object-detection) text filter: fuzzy-matches
+backend/filters/objects.py -- OD (object-detection) text filter: fuzzy-matches
 free-text, comma-separated class tokens against the offline class
 vocabulary (AICLab/preprocess/build_class_vocab.py -> filtered_objects/class_vocab.csv)
 and applies the matched classes as an AND post-filter over an
@@ -21,7 +21,7 @@ import difflib
 
 import pandas as pd
 
-from . import config
+from .. import config
 
 # difflib.SequenceMatcher ratio threshold for token -> vocab class match.
 # Loose enough to catch a plural/typo ("cars" -> "car"), tight enough to

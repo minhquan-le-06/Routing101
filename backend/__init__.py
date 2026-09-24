@@ -1,4 +1,3 @@
-"""backend/ -- FastAPI rewrite of ui/app.py's Streamlit UI. See the plan at
-C:\\Users\\semic\\.claude\\plans\\replicated-percolating-dragonfly.md (or the
-project's own docs once ported) for the architecture.
+"""backend/ -- Routing101's FastAPI app (JSON API + static frontend + media).
+See ARCHITECTURE.md at the repo root for the layout and design.
 """

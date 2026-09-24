@@ -1,10 +1,8 @@
 """
-backend/routes/search.py -- per-signal search endpoints. Each mirrors the
-matching `if mode == "..."` block in ui/app.py 1:1 (same fetch_k
-computation, same apply_filters-before-RRF ordering, same skip messages for
-picture queries, same graceful-degrade-on-ES-down behavior). Phase 2 of the
-rewrite adds ASR/Caption/OCR/Summary alongside Phase 1's Keyframe --
-Mixed/TRAKE/Hierarchy land in later phases, same module.
+backend/routes/search.py -- per-signal search endpoints (Keyframe, ASR,
+Caption, OCR, Summary, Mixed). All share the same shape: fetch_k
+computation, apply_filters before RRF, the same skip messages for picture
+queries, and graceful degrade when Elasticsearch is down.
 """
 
 from typing import List, Literal, Optional
@@ -13,11 +11,12 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from .. import config
-from .. import metadata_filter as md
-from .. import od_filter as od
-from ..common import apply_filters, df_to_results, parse_lot_range
-from ..models import (get_query_chunk_strategy, is_image_query, siglip2_long_query_note,
-                      siglip2_long_query_tokens)
+from ..core.models import (get_query_chunk_strategy, is_image_query, siglip2_long_query_note,
+                           siglip2_long_query_tokens)
+from ..core.query import resolve_query
+from ..filters import metadata as md
+from ..filters import objects as od
+from ..filters.lot import apply_filters, parse_lot_range
 from ..search import asr as asr_mod
 from ..search import caption as cap_mod
 from ..search import keyframe as kf
@@ -25,13 +24,12 @@ from ..search import mixed as mixed_mod
 from ..search import ocr as ocr_mod
 from ..search import summary as sum_mod
 from ..search import trake as trake_mod
-from .query_image import resolve_query
+from ..search.common import df_to_results
 
 router = APIRouter()
 
-# Shared skip-message text -- identical wording to ui/app.py's st.caption()
-# calls (ui/app.py:2016-2017, 2042-2043, 2079-2080) so the API response
-# reads the same regardless of which signal it came from.
+# Shared skip-message text, so the API response reads the same regardless
+# of which signal it came from.
 _SKIP_NOTHING_TO_FUSE = "Skipped — picture queries only ever have one active leg (SigLIP2), nothing to fuse."
 
 
@@ -240,7 +238,7 @@ def search_summary(body: TextSignalSearchRequest):
 
 
 # ---------------------------------------------------------------------------
-# OCR: single leg by design, no embedding leg, no RRF (ui/app.py:684-757).
+# OCR: single leg by design, no embedding leg, no RRF.
 # ---------------------------------------------------------------------------
 
 class OcrSearchRequest(BaseModel):

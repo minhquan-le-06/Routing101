@@ -1,16 +1,14 @@
 """
-backend/routes/neighbors.py -- "Show more" nearby-frames popup. Ported
-from ui/app.py's show_neighbors dialog (ui/app.py:1334-1360). The dialog's
-window (its base size per tile-size setting, plus its expand counters) is
-pure frontend state now (plan Decisions section 4), so this endpoint is
-stateless: `before`/`after` are the total frames wanted on each side, and
+backend/routes/neighbors.py -- "Show more" nearby-frames popup. The
+dialog's window (its base size per tile-size setting, plus its expand
+counters) is pure frontend state, so this endpoint is stateless: `before`/`after` are the total frames wanted on each side, and
 the frontend passes whatever it's currently showing.
 """
 
 from fastapi import APIRouter
 
 from .. import config
-from ..common import thumbnail_disk_path, thumbnail_url
+from ..core.keyframes import thumbnail_disk_path, thumbnail_url
 
 router = APIRouter()
 

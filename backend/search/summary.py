@@ -1,6 +1,6 @@
 """
 backend/search/summary.py -- Summary signal: SigLIP2-summary embeddings +
-Elasticsearch fuzzy, RRF. Ported from ui/app.py:760-894. Video-level, not
+Elasticsearch fuzzy, RRF. Video-level, not
 frame-level: one row per video (its whole summary), so RRF keys on
 video_id alone, and the displayed thumbnail is always that video's frame 1
 (no per-summary frame to point at) -- see attach_keyframe_summary.
@@ -12,10 +12,9 @@ import pandas as pd
 from cachetools import TTLCache
 
 from .. import config
-from ..common import faiss_search_pooled, l2_normalize, query_hash, video_id_from_filename
-from ..es_client import get_es_client
-from ..es_indexing import ensure_summary_fuzzy_index
-from ..models import encode_text_siglip2, is_image_query, siglip2_query_mat
+from ..core.es import ensure_summary_fuzzy_index, get_es_client
+from ..core.models import encode_text_siglip2, is_image_query, siglip2_query_mat
+from .common import faiss_search_pooled, l2_normalize, query_hash, video_id_from_filename
 
 _index = None
 _meta: pd.DataFrame = None
@@ -123,7 +122,7 @@ def search_siglip_summary(query, k: int = config.FETCH_K) -> pd.DataFrame:
     # Two independent chunkings meet here and must not be confused: the
     # corpus rows are chunks of a *summary* (config.SUMMARY_CHUNKED, built
     # upstream), while the query matrix may hold chunks of a long *query*
-    # (models.py). faiss_search_pooled RRF-fuses the second; the
+    # (core/models.py). faiss_search_pooled RRF-fuses the second; the
     # drop_duplicates below max-pools the first. Both leave the rows in
     # descending score order, which is what keep="first" relies on.
     n = k * _CHUNK_OVERFETCH if config.SUMMARY_CHUNKED else k

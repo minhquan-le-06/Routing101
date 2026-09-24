@@ -96,7 +96,7 @@ export function tile() {
 // ---------------------------------------------------------------------------
 // Query chunking -- the one setting in this dialog that does NOT live here.
 // SigLIP2's text tower reads at most 64 tokens, so a longer query has to be
-// split; the strategy decides what happens to the pieces (backend/models.py).
+// split; the strategy decides what happens to the pieces (backend/core/models.py).
 // It's backend state, not a browser preference: the splitting and the
 // embedding both happen in the backend process, and two tabs on the same port
 // share one value. So this module only carries the labels and a cached copy

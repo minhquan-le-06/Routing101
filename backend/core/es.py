@@ -1,17 +1,24 @@
 """
-backend/es_indexing.py -- bulk-index transcript/caption/OCR/summary text
-into Elasticsearch. Ported verbatim from ui/app.py's four
-ensure_*_fuzzy_index functions (ui/app.py:465-494, 606-630, 691-725,
-823-844) -- already idempotent/Streamlit-free logic (checks
-es.indices.exists() first, skips the bulk if already indexed). Called once
-each from backend/main.py's lifespan, same as the eager `st.status` block
-in ui/app.py:1579-1595.
+backend/core/es.py -- the shared Elasticsearch client plus the bulk-indexing
+of transcript/caption/OCR/summary text behind the fuzzy legs. Each
+ensure_*_fuzzy_index is idempotent (checks es.indices.exists() first, skips
+the bulk if already indexed) and is called once from backend/main.py's
+lifespan.
 """
 
 import pandas as pd
+from elasticsearch import Elasticsearch
 
-from . import config
-from .es_client import get_es_client
+from .. import config
+
+_client = None
+
+
+def get_es_client():
+    global _client
+    if _client is None:
+        _client = Elasticsearch(config.ES_HOST)
+    return _client
 
 
 def ensure_asr_fuzzy_index():

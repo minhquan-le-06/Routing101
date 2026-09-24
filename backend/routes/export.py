@@ -45,7 +45,7 @@ from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 
 from .. import export as export_mod
-from ..common import frame_idx_for_n, nearest_keyframe_n_for_frame_idx, thumbnail_url
+from ..core.keyframes import frame_idx_for_n, nearest_keyframe_n_for_frame_idx, thumbnail_url
 
 router = APIRouter()
 
@@ -171,7 +171,7 @@ def get_nearest_keyframe(video_id: str, frame_idx: int):
     """Backs the Export tab's "Keyframes" checkbox: re-checking it while a
     raw native frame (frame_idx, no n) is curated snaps that frame to its
     nearest indexed keyframe, so the popup's keyframe-mode UI has an n to
-    show/work with again -- see backend/common.py's
+    show/work with again -- see backend/core/keyframes.py's
     nearest_keyframe_n_for_frame_idx()."""
     n = nearest_keyframe_n_for_frame_idx(video_id, frame_idx)
     if n is None:

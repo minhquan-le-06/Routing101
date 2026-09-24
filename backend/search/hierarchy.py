@@ -11,16 +11,17 @@ backend/search/hierarchy.py -- Hierarchy Search, three steps:
 This only ever uses the SigLIP2 frame leg -- fuzzy legs have no
 picture-query counterpart, and the drill-down step is a picture query by
 construction (the seed is a frame's own thumbnail), so there's no
-meaningful text/RRF path to offer here at all. Ported from
-ui/app.py:1132-1179 (hierarchy_expand_group).
+meaningful text/RRF path to offer here at all.
 """
 
 import pandas as pd
 from PIL import Image
 
-from .. import metadata_filter as md
-from ..common import apply_filters, df_to_results, thumbnail_disk_path
+from ..core.keyframes import thumbnail_disk_path
+from ..filters import metadata as md
+from ..filters.lot import apply_filters
 from . import keyframe as kf
+from .common import df_to_results
 
 
 def hierarchy_expand_group(video_id: str, frames: list, top_g: int, fetch_k: int, seed_n: int = None) -> list:
@@ -77,7 +78,7 @@ def base_search_grouped(query, fetch_k, video_filter, lot_filter, top_k, facet_f
     """Step 1: SigLIP2 frame search, grouped by video_id in first-occurrence
     (= best rank) order -- same grouping render_grid's group_mode="video"
     does, hand-rolled here since Hierarchy needs the per-group list for
-    steps 2-3, not just a flat rendered grid (ui/app.py:2114-2130).
+    steps 2-3, not just a flat rendered grid.
 
     The metadata facet filter (subject/province) is applied here, at Step 1,
     same tier as video_filter/lot_filter -- video-level scoping, unlike

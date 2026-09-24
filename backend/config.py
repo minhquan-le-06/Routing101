@@ -1,11 +1,10 @@
 """
 backend/config.py -- paths + constants shared by every backend module.
 
-Ported verbatim from ui/app.py's Config block (ui/app.py:70-134) -- see
-CLAUDE.md and the plan at the top of this rewrite for why these values are
-hardcoded here rather than in an env file (single-developer local scaffold,
-data lives outside the repo under absolute D:/University/Summ26/AICData/
-paths). Update these constants, not a config file, if the data moves.
+These values are hardcoded here rather than in an env file (single-developer
+local scaffold, data lives outside the repo under absolute
+D:/University/Summ26/AICData/ paths). Update these constants, not a config
+file, if the data moves. The one env var is R101_EMBED (embedding profile).
 """
 
 import os
@@ -100,9 +99,9 @@ TRANSCRIPTS_DIR = _EXTRACTED / "transcripts"
 CAPTIONING_DIR = _EXTRACTED / "captions"  # was captioning
 OCR_DIR = _EXTRACTED / "ocr"
 SUMMARY_DIR = _EXTRACTED / "summaries"
-METADATA_DIR = _EXTRACTED / "metadata"  # rule/LLM-extracted per-lot metadata CSVs, L25-L30 (backend/metadata_filter.py)
+METADATA_DIR = _EXTRACTED / "metadata"  # rule/LLM-extracted per-lot metadata CSVs, L25-L30 (backend/filters/metadata.py)
 
-# OD (object-detection) text filter (backend/od_filter.py) -- per-video
+# OD (object-detection) text filter (backend/filters/objects.py) -- per-video
 # filtered-detections CSVs produced upstream by AICLab/preprocess/filter_apply.py
 # (outside this repo) plus the offline class vocabulary built from them by
 # AICLab/preprocess/build_class_vocab.py.
@@ -136,11 +135,8 @@ ES_INDEX_SUMMARY = "summary_videos"
 # Thread-pool tuning -- CPU-only torch defaults to num-cores intraop threads
 # AND num-cores interop threads, and FAISS's own OpenMP pool defaults to
 # num-cores on top of that; left uncapped the pools compound into far more
-# live threads than the box has cores. Unlike ui/app.py (Streamlit re-execs
-# the whole module on every rerun, so this needed a cache_resource + guard
-# dance to only ever run once per process), a FastAPI process has a real
-# single startup -- see backend/main.py's lifespan, which calls
-# tune_thread_pools() exactly once.
+# live threads than the box has cores. Applied exactly once per process --
+# see backend/main.py's lifespan, which calls tune_thread_pools().
 CPU_BUDGET = max(1, (os.cpu_count() or 4) - 2)  # leave headroom for uvicorn/OS
 
 

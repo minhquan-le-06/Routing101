@@ -1,5 +1,5 @@
 """
-backend/metadata_filter.py -- structured facet filter over the per-lot
+backend/filters/metadata.py -- structured facet filter over the per-lot
 metadata extracted into AICData/extracted/metadata/*.csv (subject/topic for L25, province for
 L27-29, ...). Not every extracted CSV yields a good *facet* -- a facet needs
 low cardinality (a handful of pickable values), so this only exposes the two
@@ -8,7 +8,7 @@ low single digits). L26's dish_name, and L27-29's site/host, are too
 high-cardinality to browse as a dropdown -- they stay in the CSVs for
 reference/fuzzy-search use, not wired in here.
 
-Same call shape as backend/od_filter.py: an AND post-filter applied after a
+Same call shape as backend/filters/objects.py: an AND post-filter applied after a
 leg's own ranking, right alongside apply_filters (video/lot scope) in
 backend/routes/search.py, since this is exactly that -- a third scope
 dimension, just video-level metadata instead of video_id/lot-number. Unlike
@@ -24,7 +24,7 @@ import csv
 
 import pandas as pd
 
-from . import config
+from .. import config
 
 # field -> {video_id: {value, ...}} -- a set per video since one field
 # (province) can hold more than one value for a single video (L28's

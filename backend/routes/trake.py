@@ -1,6 +1,6 @@
 """
-backend/routes/trake.py -- TRAKE endpoint. Ports ui/app.py:2181-2262's
-render block on top of backend/search/trake.py's ported logic. Each
+backend/routes/trake.py -- TRAKE endpoint, on top of
+backend/search/trake.py's ranking logic. Each
 candidate's matched events carry a thumbnail_url (frontend renders them
 directly, same shape convention as everywhere else) and their own
 `timestamp` (seconds) so the frontend can drive TRAKE's marker-bar
@@ -14,8 +14,9 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from .. import config
-from ..common import parse_lot_range, thumbnail_url
-from ..models import get_query_chunk_strategy, siglip2_long_query_tokens
+from ..core.keyframes import thumbnail_url
+from ..core.models import get_query_chunk_strategy, siglip2_long_query_tokens
+from ..filters.lot import parse_lot_range
 from ..search import trake as trake_mod
 
 router = APIRouter()

@@ -1,8 +1,7 @@
 """
 backend/search/mixed.py -- the legs+weights composite signal: a
 user-weighted RRF across Keyframe/ASR/Caption/OCR (not Summary --
-video-level, kept out of this signal). Ported from ui/app.py:896-978.
-Keyframe and OCR have no leg choice -- Keyframe's CLIP leg was removed
+video-level, kept out of this signal). Keyframe and OCR have no leg choice -- Keyframe's CLIP leg was removed
 entirely (see backend/search/keyframe.py), leaving a single SigLIP2 leg;
 OCR was always fuzzy-only -- so both are used at their own raw rank
 whenever their weight is > 0. ASR/Caption still offer 2 legs each: only
@@ -27,7 +26,7 @@ import numpy as np
 import pandas as pd
 
 from .. import config
-from ..common import apply_filters
+from ..filters.lot import apply_filters
 from . import asr as asr_mod
 from . import caption as cap_mod
 from . import keyframe as kf

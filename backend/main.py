@@ -1,9 +1,8 @@
 """
 backend/main.py -- FastAPI app entry point. One process serves the JSON
 API, the static frontend, and the thumbnail/video media directories --
-mirrors ui/app.py's single-process constraint (CLAUDE.md: never duplicate
-the ~4GB of loaded model weights across processes), just FastAPI-shaped
-instead of Streamlit-shaped.
+single-process on purpose, so the loaded model weights (GBs) are never
+duplicated across processes.
 
 Run with:
     uvicorn backend.main:app --reload
@@ -17,9 +16,9 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from . import config
-from .es_indexing import ensure_all_fuzzy_indices
-from .models import (DEVICE, QUERY_CHUNK_STRATEGIES, get_query_chunk_strategy,
-                     load_siglip2, set_query_chunk_strategy)
+from .core.es import ensure_all_fuzzy_indices
+from .core.models import (DEVICE, QUERY_CHUNK_STRATEGIES, get_query_chunk_strategy,
+                          load_siglip2, set_query_chunk_strategy)
 from .routes import export, facets, hierarchy, neighbors, playback, query_image, search, trake
 from .search import asr as asr_mod
 from .search import caption as cap_mod
@@ -29,9 +28,7 @@ from .search import summary as sum_mod
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Eager build, once, before the first request is served -- direct
-    # replacement for ui/app.py's `with st.status("Loading signals…")`
-    # block (ui/app.py:1579-1595).
+    # Eager build, once, before the first request is served.
     config.tune_thread_pools(DEVICE)
     print(f"[startup] device={DEVICE} cpu_budget={config.CPU_BUDGET}")
     # Which embedding profile this process is (backend/config.py). Printed
@@ -132,7 +129,7 @@ def _settings_payload():
 @app.get("/api/settings")
 def get_settings():
     """Backend-side search settings -- currently just how an over-64-token
-    query is split for the SigLIP2 embedding legs (backend/models.py). Unlike
+    query is split for the SigLIP2 embedding legs (backend/core/models.py). Unlike
     the frontend's own preferences these can't live in localStorage: they
     change what a search returns, and the splitting happens in this process.
     The settings dialog reads this on open so it shows the live value rather

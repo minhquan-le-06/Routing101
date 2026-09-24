@@ -1,9 +1,8 @@
 """
-backend/routes/playback.py -- single-frame video playback. Ported from
-ui/app.py's frame_playback_dialog (ui/app.py:1363-1376) -- used by the
-play button on every non-TRAKE signal's render_actions row. TRAKE's own
-multi-event marker-bar playback (trake_playback_dialog) lands in the TRAKE
-phase; this endpoint only needs a single frame's timestamp.
+backend/routes/playback.py -- single-frame video playback, used by the
+play button on every non-TRAKE signal's result row (TRAKE's marker-bar
+playback also calls it, for fps). This endpoint only needs a single
+frame's timestamp.
 
 `n` is optional: the TRAKE Export tab's curation panel starts a video
 playing from a bare video_id, before any keyframe/event is known yet (an
@@ -16,7 +15,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException
 
 from .. import config
-from ..common import keyframe_timestamp, video_fps_for_video, video_url
+from ..core.keyframes import keyframe_timestamp, video_fps_for_video, video_url
 
 router = APIRouter()
 
@@ -35,7 +34,6 @@ def get_playback(video_id: str, n: Optional[int] = None):
         "start_time": ts if ts is not None else 0,
         # Live frame-timer support (frontend computes round(currentTime * fps)
         # on every timeupdate) -- falls back to a sane default if this
-        # particular frame's fps couldn't be resolved, same fallback
-        # trake_playback_dialog uses (ui/app.py:1361) for the same reason.
+        # particular frame's fps couldn't be resolved.
         "fps": fps if fps is not None else 25.0,
     }

@@ -10,13 +10,18 @@ already up.
 backend/
   config.py           paths + constants (data lives outside the repo, see README's Prerequisites)
   main.py             FastAPI app entry -- mounts routers + static frontend/media
-  common.py           shared helpers (result-shape contract, map-keyframes lookups)
-  models.py           SigLIP2 text/image tower, loaded once, shared across signals
   export.py           AIC submission CSV row-generation logic (KIS/VQA/TRAKE)
-  od_filter.py         object-detection text filter (fuzzy class match)
-  metadata_filter.py   structured per-lot metadata facet filter
-  es_client.py, es_indexing.py   Elasticsearch client + bulk-indexing for the fuzzy legs
+  core/               built once, used everywhere
+    models.py           SigLIP2 text/image tower, loaded once, shared across signals
+    es.py               Elasticsearch client + bulk-indexing for the fuzzy legs
+    keyframes.py        map-keyframes lookups (n <-> frame_idx <-> pts_time/fps) + thumbnail/video URLs
+    query.py            picture-query store + resolve_query() (request body -> str or PIL.Image)
+  filters/            post-search filters, all applied to a leg's result df
+    lot.py              video-id / lot-range filter (sidebar "Search in collection")
+    objects.py          object-detection text filter (fuzzy class match)
+    metadata.py         structured per-lot metadata facet filter
   search/             per-signal search + RRF (keyframe, asr, caption, ocr, summary, mixed, hierarchy, trake)
+    common.py           query cache key, pooled FAISS search, result-shape contract (df_to_results)
   routes/             FastAPI endpoints on top of search/ (+ export, facets, playback, neighbors, query_image)
 frontend/
   index.html           main app shell
@@ -99,7 +104,7 @@ SigLIP2's text tower has a hard 64-token context — `Siglip2TextModel`'s
 raise and no RoPE to extrapolate. Anything longer used to be truncated at
 encode time, with a warning as the only trace.
 
-`backend/models.py` now splits an over-window query instead. `chunk_text()`
+`backend/core/models.py` now splits an over-window query instead. `chunk_text()`
 greedily packs whole sentences into pieces that each fit the window, falling
 back to greedy word packing when a single sentence is itself too long (the
 common case for a typed run-on query); no text is dropped. What happens to
@@ -126,7 +131,7 @@ beat Truncate, which just deletes the tail.
 
 Mechanically: `siglip2_query_mat()` returns an `(n_vectors, dim)` matrix —
 one row under Truncate/Average, one per chunk under Per chunk — and every
-SigLIP2 leg hands it to `common.py::faiss_search_pooled()`, which fuses across
+SigLIP2 leg hands it to `search/common.py::faiss_search_pooled()`, which fuses across
 rows. A single-row matrix is passed through to `index.search()` untouched, so
 short queries (and image queries, and both single-vector modes) rank
 bit-for-bit as they did before any of this existed.
@@ -145,7 +150,7 @@ Two more consequences worth knowing:
   backend process, so two tabs on the same port share one value. The dialog
   re-reads it on open rather than trusting its cache. Each profile's process
   has its own, like the profile itself.
-- Every leg's TTL cache keys on `common.py::query_hash()`, which folds the
+- Every leg's TTL cache keys on `search/common.py::query_hash()`, which folds the
   active strategy in, so a switch shows up on the next search rather than
   being masked by the previous mode's cached ranking.
 
@@ -173,7 +178,7 @@ routes use.
 | TRAKE | reuses the other signals, one per event | ordered multi-event search: find videos where every event's best match occurs in order; optional context (E0) query is always matched via Summary, boosting a video's score independent of the ordering constraint |
 
 Every leg normalizes to `{video_id, n, rank, score_label, score_val, text}`
-(`backend/common.py::df_to_results`) before it reaches the frontend, so one
+(`backend/search/common.py::df_to_results`) before it reaches the frontend, so one
 `renderGrid()` (+ neighbor/playback popups) serves every signal except
 Hierarchy and TRAKE, which render their own grouped/multi-event shapes.
 

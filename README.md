@@ -148,7 +148,7 @@ you get the 768 profile, exactly as before.
    The `-v es-data:...` volume matters: without it, `docker rm`/recreate
    loses all four fuzzy indices and the next launch re-bulks everything
    from CSV. With the volume, `ensure_*_fuzzy_index()` in
-   `backend/es_indexing.py` checks `es.indices.exists(...)` up front and
+   `backend/core/es.py` checks `es.indices.exists(...)` up front and
    only (re)indexes an index that doesn't exist yet -- to force a rebuild
    after changing source data, delete that one index (e.g.
    `curl -X DELETE localhost:9200/caption_frames`) rather than the whole
@@ -303,7 +303,7 @@ Elasticsearch, and no public port for a browser to reach.
    relative path (`/api/...`), so there's no CORS wrinkle from tunneling.
 
 7. **Optional: turn on a GPU** (Settings → Accelerator → GPU T4 x2 or
-   P100) before running -- `backend/models.py` auto-detects
+   P100) before running -- `backend/core/models.py` auto-detects
    `torch.cuda.is_available()`, no code change needed, and it meaningfully
    speeds up SigLIP2 inference over CPU-only.
 

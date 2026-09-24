@@ -1,14 +1,11 @@
 """
-backend/routes/hierarchy.py -- Hierarchy Search endpoints. Ports
-ui/app.py:2112-2179. Two endpoints because step 3's drill-down is
-per-video and re-triggerable independently (seed-frame change, "Expand"
-button) without re-running step 1 -- the frontend caches each group's
-step-1 `frames` list from the initial search response and resends it
-verbatim on a later expand call, mirroring ui/app.py's own behavior
+backend/routes/hierarchy.py -- Hierarchy Search endpoints. Two endpoints
+because step 3's drill-down is per-video and re-triggerable independently
+(seed-frame change, "Expand" button) without re-running step 1 -- the
+frontend caches each group's step-1 `frames` list from the initial search
+response and resends it verbatim on a later expand call
 (`hierarchy_expand_group` always drills down from the ORIGINAL step-1
-`groups[vid]` list, never a previously-drilled/compounded one -- see
-ui/app.py:2162, which reads `groups[vid]` fresh, not the prior render's
-drilled result).
+list, never a previously-drilled/compounded one).
 """
 
 from typing import List, Optional
@@ -17,9 +14,9 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from .. import config
-from ..common import parse_lot_range
+from ..core.query import resolve_query
+from ..filters.lot import parse_lot_range
 from ..search import hierarchy as hier_mod
-from .query_image import resolve_query
 
 router = APIRouter()
 

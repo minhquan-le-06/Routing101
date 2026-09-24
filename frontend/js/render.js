@@ -1,7 +1,7 @@
 // frontend/js/render.js -- renderThumb/renderActions/renderGrid, a direct
 // port of ui/app.py:1461-1567 (render_thumb/render_actions/render_grid).
 // Every signal calls renderGrid() with the same {video_id, n, rank,
-// score_label, score_val, text, thumbnail_url} shape backend/common.py's
+// score_label, score_val, text, thumbnail_url} shape backend/search/common.py's
 // df_to_results() produces -- one renderer for every signal, same as the
 // original's "one render_grid() serves every signal" design.
 

@@ -121,7 +121,7 @@ initFacets(runCurrentSearch);
 // port and they are otherwise pixel-identical, so without this badge it's
 // only a matter of time before a result gets credited to the wrong model. Also
 // stamped into the tab title, for when the tab is too narrow to read.
-// Long-query chunking is backend state (backend/models.py), so seed the
+// Long-query chunking is backend state (backend/core/models.py), so seed the
 // cached copy once at load -- purely so the settings dialog's first paint
 // shows the mode actually in force; the dialog re-reads it on open anyway.
 getSearchSettings().then(({ query_chunk_strategy }) => setQueryChunkCache(query_chunk_strategy))

@@ -5,8 +5,7 @@ videos where every event's best-matching frame occurs in the declared
 order, plus an optional context (E0) query always matched via Summary --
 reserved for that role since Summary is video-level (always resolves to
 frame 1, see attach_keyframe_summary), not one of the events' own signal
-choices. Ported from ui/app.py:980-1113 (trake_search_event,
-trake_rank_videos). Reuses each signal's existing search + RRF pipeline
+choices. Reuses each signal's existing search + RRF pipeline
 UNSCOPED by default (no video/lot filter -- TRAKE searches the whole
 corpus per event, on purpose, though the caller may still pass a filter to
 narrow every event the same way the UI lets a user do for other signals),
@@ -16,9 +15,9 @@ embedding models, no new per-signal fusion logic.
 
 import pandas as pd
 
-from .. import config
-from .. import metadata_filter as md
-from ..common import apply_filters, keyframe_timestamp
+from ..core.keyframes import keyframe_timestamp
+from ..filters import metadata as md
+from ..filters.lot import apply_filters
 from . import asr as asr_mod
 from . import caption as cap_mod
 from . import keyframe as kf

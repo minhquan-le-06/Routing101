@@ -62,14 +62,14 @@ architecture" section for the curate/cache/merge flow end to end.
 Deliberately reuses the app's *existing* result-dict shapes instead of a
 parallel Candidate model:
   - KIS/VQA candidates ("similars"): {video_id, n, rank, score_label,
-    score_val, text} (backend/common.py::df_to_results -- what every
+    score_val, text} (backend/search/common.py::df_to_results -- what every
     non-TRAKE signal already returns).
   - KIS/VQA confirmed/answers: {video_id, n} (n = the app's internal
     1-indexed keyframe ordinal).
 
 KIS/VQA rows built here stay n-space; rows_to_csv_text() below does the n
 -> frame_idx translation AIC submissions actually expect (frame_idx_for_n
-in backend/common.py) plus final text formatting -- kept separate so the
+in backend/core/keyframes.py) plus final text formatting -- kept separate so the
 ranking/dedup logic is testable without touching map-keyframes files. TRAKE
 rows (video_id + a list of already-native frame_idxs, straight from
 generate_trake_rows() or a merge of several cached calls to it) are always
@@ -80,11 +80,12 @@ them.
 from random import Random
 from typing import Optional
 
-from .common import (
-    df_to_results, frame_idx_for_n, n_for_frame_idx, native_frame_range_for_video,
+from .core.keyframes import (
+    frame_idx_for_n, n_for_frame_idx, native_frame_range_for_video,
     nearest_keyframe_n_for_frame_idx, valid_ns_for_video,
 )
 from .search import keyframe as kf_mod
+from .search.common import df_to_results
 
 DEFAULT_NEIGHBOUR_COUNT = 10
 DEFAULT_SIMILAR_COUNT = 99  # confirmed-mode "Similars" pool -- generous enough to fill max_rows after dedup/filler

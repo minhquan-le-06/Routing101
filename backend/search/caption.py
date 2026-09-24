@@ -1,6 +1,6 @@
 """
 backend/search/caption.py -- Caption signal: SigLIP2-caption embeddings +
-Elasticsearch fuzzy, RRF. Ported from ui/app.py:558-683. Frame-level on
+Elasticsearch fuzzy, RRF. Frame-level on
 both legs (frame_id == map-keyframes.n directly), so RRF keys on frame_id
 and `n` needs no time-based lookup at all.
 """
@@ -11,10 +11,9 @@ import pandas as pd
 from cachetools import TTLCache
 
 from .. import config
-from ..common import faiss_search_pooled, l2_normalize, query_hash, video_id_from_filename
-from ..es_client import get_es_client
-from ..es_indexing import ensure_caption_fuzzy_index
-from ..models import is_image_query, siglip2_query_mat
+from ..core.es import ensure_caption_fuzzy_index, get_es_client
+from ..core.models import is_image_query, siglip2_query_mat
+from .common import faiss_search_pooled, l2_normalize, query_hash, video_id_from_filename
 
 _index = None
 _meta: pd.DataFrame = None

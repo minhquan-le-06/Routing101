@@ -1,6 +1,6 @@
 """
 backend/search/ocr.py -- OCR signal: Elasticsearch fuzzy over per-frame OCR
-text only. Ported from ui/app.py:684-757. Single leg by design (no
+text only. Single leg by design (no
 embedding leg, no RRF).
 """
 
@@ -8,10 +8,9 @@ import pandas as pd
 from cachetools import TTLCache
 
 from .. import config
-from ..common import query_hash
-from ..es_client import get_es_client
-from ..es_indexing import ensure_ocr_fuzzy_index
-from ..models import is_image_query
+from ..core.es import ensure_ocr_fuzzy_index, get_es_client
+from ..core.models import is_image_query
+from .common import query_hash
 
 _fuzzy_cache = TTLCache(maxsize=256, ttl=300)
 _EMPTY_FUZZY = pd.DataFrame(columns=["rank", "score", "video_id", "frame_id", "text"])

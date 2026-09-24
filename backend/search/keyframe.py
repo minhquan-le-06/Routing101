@@ -1,14 +1,12 @@
 """
 backend/search/keyframe.py -- Keyframe signal: SigLIP2 frame embeddings.
-Ported from ui/app.py:340-412 (build_frame_index etc). CLIP ViT-B/32 +
-its Multilingual-CLIP query-time text encoder (XLM-RoBERTa-large) were
-removed from this signal entirely -- that text tower alone cost ~4.6GB RAM
+CLIP ViT-B/32 + its Multilingual-CLIP query-time text encoder
+(XLM-RoBERTa-large) were removed from this signal entirely -- that text tower alone cost ~4.6GB RAM
 once lazily loaded, dwarfing every other model/index in the system
 combined, for a second frame-embedding leg that mostly duplicated
-SigLIP2's own ranking. @st.cache_resource -> build_frame_index() is called
-once at startup (backend/main.py's lifespan) and the result held in
-_FRAME_INDICES; @st.cache_data -> a small TTLCache per search function
-keyed on (query_hash, k).
+SigLIP2's own ranking. build_frame_index() is called once at startup
+(backend/main.py's lifespan) and the result held in _FRAME_INDICES; each
+search function has a small TTLCache keyed on (query_hash, k).
 """
 
 import glob as glob_mod
@@ -19,8 +17,8 @@ import pandas as pd
 from cachetools import TTLCache
 
 from .. import config
-from ..common import faiss_search_pooled, l2_normalize, query_hash, video_id_from_filename
-from ..models import siglip2_query_mat
+from ..core.models import siglip2_query_mat
+from .common import faiss_search_pooled, l2_normalize, query_hash, video_id_from_filename
 
 # glob_pattern -> (faiss.IndexFlatIP, lookup_df) -- built once by build_frame_index()
 _FRAME_INDICES: dict = {}
@@ -59,7 +57,7 @@ def _get_frame_index(glob_pattern: str):
 def _search_frame(index, lookup_df, qmat: np.ndarray, k: int) -> pd.DataFrame:
     """`qmat` is either one query vector (any shape faiss_search_pooled can
     reshape, including the 1-D one search_siglip2_by_frame reconstructs) or
-    one row per chunk of a long query -- see backend/models.py."""
+    one row per chunk of a long query -- see backend/core/models.py."""
     ids, scores = faiss_search_pooled(index, qmat, k)
     results = lookup_df.iloc[ids].copy().reset_index(drop=True)
     results["score"] = scores

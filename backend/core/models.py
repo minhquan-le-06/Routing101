@@ -1,9 +1,7 @@
 """
-backend/models.py -- shared model loaders. Ported from ui/app.py:121,
-285-327. @st.cache_resource -> plain module-level singleton (`_siglip2`),
-built once by backend/main.py's lifespan hook instead of lazily on first
-call -- a FastAPI process has a real one-time startup, so there's no need
-for Streamlit's per-process-cache-keyed-by-args dance.
+backend/core/models.py -- shared model loaders. The SigLIP2 model is a plain
+module-level singleton (`_siglip2`), built once by backend/main.py's
+lifespan hook rather than lazily on first call.
 """
 
 import re
@@ -12,7 +10,7 @@ import numpy as np
 import torch
 from PIL import Image
 
-from . import config
+from .. import config
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
