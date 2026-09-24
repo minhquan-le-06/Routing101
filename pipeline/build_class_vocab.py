@@ -2,7 +2,7 @@
 pipeline/build_class_vocab.py -- offline, run-once preprocessing for the OD
 (object-detection) text filter (see backend/od_filter.py). Scans every
 per-video OD-detections CSV under AICData/extracted/filtered_objects/*.csv
-(produced upstream by AICPreprocess/filter_apply.py, outside this repo --
+(produced upstream by AICLab/preprocess/filter_apply.py, outside this repo --
 one row per surviving detection, `class_name` is the Open Images label),
 collects the unique class names, normalizes them, and writes the result as
 a flat list to AICData/extracted/filtered_objects/class_vocab.csv.

@@ -58,7 +58,7 @@ def encode_text_siglip2(texts: list) -> np.ndarray:
 # A long query no longer has to lose that text. chunk_text() below splits it
 # into sentence-aligned pieces that each fit the window, and
 # QUERY_CHUNK_STRATEGIES decides what happens to the pieces -- the same three
-# options AICPreprocess/summary-embed.ipynb offers on the corpus side, where
+# options AICLab/preprocess/summary-embed.ipynb offers on the corpus side, where
 # chunk_text() and _split_long_unit() come from:
 #
 #   truncate         one vector, first 64 tokens only. The old behaviour,

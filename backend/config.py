@@ -102,7 +102,7 @@ OCR_DIR = _EXTRACTED / "ocr"
 SUMMARY_DIR = _EXTRACTED / "summaries"
 
 # OD (object-detection) text filter (backend/od_filter.py) -- per-video
-# filtered-detections CSVs produced upstream by AICPreprocess/filter_apply.py
+# filtered-detections CSVs produced upstream by AICLab/preprocess/filter_apply.py
 # (outside this repo) plus the offline class vocabulary built from them by
 # pipeline/build_class_vocab.py.
 FILTERED_OBJECT_DIR = _EXTRACTED / "filtered_objects"

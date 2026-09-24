@@ -109,7 +109,7 @@ the pieces is the **Long-query chunking** setting in the ⚙ dialog:
 | Average | 1 | Every chunk embedded, L2-normalized, averaged. A soft AND — a result has to look somewhat like all of the query. |
 | Per chunk *(default)* | N | Each chunk gets its own ranked list; the lists are RRF-fused. A result is rewarded for ranking well against several chunks. |
 
-`AICPreprocess/summary-embed.ipynb` (where `chunk_text` comes from) max-pools
+`AICLab/preprocess/summary-embed.ipynb` (where `chunk_text` comes from) max-pools
 its chunks, and on the corpus side that is right: a summary's chunks are
 unrelated topics, so a hit on one is a real hit. On the query side max-pooling
 would make added clauses behave like an OR — one strongly-matching clause
