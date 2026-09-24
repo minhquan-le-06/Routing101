@@ -4,7 +4,7 @@ CLIP ViT-B/32 + its Multilingual-CLIP query-time text encoder
 (XLM-RoBERTa-large) were removed from this signal entirely -- that text tower alone cost ~4.6GB RAM
 once lazily loaded, dwarfing every other model/index in the system
 combined, for a second frame-embedding leg that mostly duplicated
-SigLIP2's own ranking. build_frame_index() is called once at startup
+SigLIP2's own ranking. build_siglip2_frame_index() is called once at startup
 (backend/main.py's lifespan) and the result held in _FRAME_INDICES; each
 search function has a small TTLCache keyed on (query_hash, k).
 """
@@ -20,11 +20,11 @@ from .. import config
 from ..core.models import siglip2_query_mat
 from .common import faiss_search_pooled, l2_normalize, query_hash, video_id_from_filename
 
-# glob_pattern -> (faiss.IndexFlatIP, lookup_df) -- built once by build_frame_index()
+# glob_pattern -> (faiss.IndexFlatIP, lookup_df) -- built once by build_siglip2_frame_index()
 _FRAME_INDICES: dict = {}
 
 
-def build_frame_index(glob_pattern: str):
+def build_siglip2_frame_index(glob_pattern: str):
     npy_paths = sorted(glob_mod.glob(glob_pattern))
     if not npy_paths:
         raise FileNotFoundError(f"no .npy files matched: {glob_pattern}")
@@ -50,7 +50,7 @@ def build_frame_index(glob_pattern: str):
 
 def _get_frame_index(glob_pattern: str):
     if glob_pattern not in _FRAME_INDICES:
-        build_frame_index(glob_pattern)
+        build_siglip2_frame_index(glob_pattern)
     return _FRAME_INDICES[glob_pattern]
 
 

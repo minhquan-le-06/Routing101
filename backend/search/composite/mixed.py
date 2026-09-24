@@ -1,5 +1,5 @@
 """
-backend/search/mixed.py -- the legs+weights composite signal: a
+backend/search/composite/mixed.py -- the legs+weights composite signal: a
 user-weighted RRF across Keyframe/ASR/Caption/OCR (not Summary --
 video-level, kept out of this signal). Keyframe and OCR have no leg choice -- Keyframe's CLIP leg was removed
 entirely (see backend/search/keyframe.py), leaving a single SigLIP2 leg;
@@ -16,21 +16,19 @@ already.
 The standalone "Mixed" tab (`backend/routes/search.py::search_mixed`) no
 longer uses `_mixed_*_df` below -- it moved to many independent
 single-signal sub-queries (see that route's own docstring) -- but does
-reuse `rrf_fuse_weighted()`, keyed by sub-query index instead of signal
-name. `_mixed_*_df` themselves now only back TRAKE's per-event "Mixed"
-signal option (`backend/search/trake.py::trake_search_event`), which still
+reuse the same weighted RRF (search/common.py's rrf_fuse with `weights`),
+keyed by sub-query index instead of signal name. `_mixed_*_df` themselves now only back TRAKE's per-event "Mixed"
+signal option (`backend/search/composite/trake.py::trake_search_event`), which still
 works exactly as this module describes.
 """
 
-import numpy as np
 import pandas as pd
 
-from .. import config
-from ..filters.lot import apply_filters
-from . import asr as asr_mod
-from . import caption as cap_mod
-from . import keyframe as kf
-from . import ocr as ocr_mod
+from ...filters.lot import apply_filters
+from .. import asr as asr_mod
+from .. import caption as cap_mod
+from .. import keyframe as kf
+from .. import ocr as ocr_mod
 
 
 def _mixed_keyframe_df(query, fetch_k, video_filter, lot_filter) -> pd.DataFrame:
@@ -50,7 +48,7 @@ def _mixed_asr_df(query, fetch_k, video_filter, lot_filter, legs) -> pd.DataFram
     # so Mixed's own ASR leg toggles stay the two they have always been.
     named = {}
     if legs.get("asr_siglip"):
-        named["siglip_asr"] = apply_filters(asr_mod.search_siglip_asr(query, k=fetch_k), video_filter, lot_filter)
+        named["siglip_asr"] = apply_filters(asr_mod.search_siglip2_asr(query, k=fetch_k), video_filter, lot_filter)
     if legs.get("asr_fuzzy"):
         fuzzy_df, _warning = asr_mod.search_asr_fuzzy(query, k=fetch_k)
         named["fuzzy"] = apply_filters(fuzzy_df, video_filter, lot_filter)
@@ -66,7 +64,7 @@ def _mixed_asr_df(query, fetch_k, video_filter, lot_filter, legs) -> pd.DataFram
 def _mixed_caption_df(query, fetch_k, video_filter, lot_filter, legs) -> pd.DataFrame:
     named = {}
     if legs.get("cap_siglip"):
-        named["siglip_caption"] = apply_filters(cap_mod.search_siglip_caption(query, k=fetch_k), video_filter, lot_filter)
+        named["siglip_caption"] = apply_filters(cap_mod.search_siglip2_caption(query, k=fetch_k), video_filter, lot_filter)
     if legs.get("cap_fuzzy"):
         fuzzy_df, _warning = cap_mod.search_caption_fuzzy(query, k=fetch_k)
         named["fuzzy"] = apply_filters(fuzzy_df, video_filter, lot_filter)
@@ -85,22 +83,3 @@ def _mixed_ocr_df(query, fetch_k, video_filter, lot_filter) -> pd.DataFrame:
     fuzzy_df, _warning = ocr_mod.search_ocr_fuzzy(query, k=fetch_k)
     df = ocr_mod.attach_keyframe_ocr(apply_filters(fuzzy_df, video_filter, lot_filter))
     return df[["video_id", "n", "rank"]] if df is not None and not df.empty else None
-
-
-def rrf_fuse_weighted(signal_dfs: dict, weights: dict, k: int = config.RRF_K, top_n: int = config.DISPLAY_N) -> pd.DataFrame:
-    """Weighted RRF across already-per-signal-ranked dfs, keyed on (video_id, n)."""
-    scores: dict = {}
-    for name, df in signal_dfs.items():
-        w = weights.get(name, 0)
-        if not w or df is None or df.empty:
-            continue
-        for _, row in df.iterrows():
-            key = (row["video_id"], int(row["n"]))
-            scores[key] = scores.get(key, 0.0) + w * (1.0 / (k + row["rank"]))
-    rows = [{"video_id": vid, "n": n, "rrf_score": s} for (vid, n), s in scores.items()]
-    out = pd.DataFrame(rows)
-    if out.empty:
-        return out
-    out = out.sort_values("rrf_score", ascending=False).reset_index(drop=True)
-    out["rank"] = np.arange(1, len(out) + 1)
-    return out.head(top_n)

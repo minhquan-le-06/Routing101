@@ -11,16 +11,17 @@ import pandas as pd
 from cachetools import TTLCache
 
 from .. import config
-from ..core.es import ensure_asr_fuzzy_index, get_es_client
+from ..core.es import ensure_asr_fuzzy_index
 from ..core.keyframes import keyframe_timestamp, nearest_keyframe_n_by_time
-from ..core.models import is_image_query, siglip2_query_mat
-from .common import faiss_search_pooled, l2_normalize, query_hash, video_id_from_filename
+from ..core.models import siglip2_query_mat
+from .common import (es_text_leg, faiss_search_pooled, l2_normalize, query_hash, rrf_fuse,
+                     video_id_from_filename)
 
 _index = None
 _meta: pd.DataFrame = None
 
 
-def build_siglip_asr_index():
+def build_siglip2_asr_index():
     global _index, _meta
     if not (config.SIGLIP_ASR_FAISS.exists() and config.SIGLIP_ASR_META.exists()):
         # 768embed/768transcript/{video_id}.npy + {video_id}.csv (was asr_embed/
@@ -75,14 +76,14 @@ def build_siglip_asr_index():
 
 def _get_index():
     if _index is None:
-        build_siglip_asr_index()
+        build_siglip2_asr_index()
     return _index, _meta
 
 
 _siglip_cache = TTLCache(maxsize=256, ttl=300)
 
 
-def search_siglip_asr(query, k: int = config.FETCH_K) -> pd.DataFrame:
+def search_siglip2_asr(query, k: int = config.FETCH_K) -> pd.DataFrame:
     cache_key = (query_hash(query), k)
     if cache_key in _siglip_cache:
         return _siglip_cache[cache_key]
@@ -106,43 +107,20 @@ def search_siglip_asr(query, k: int = config.FETCH_K) -> pd.DataFrame:
 # the query body: `fuzzy` casts wide (fuzziness AUTO + the implicit OR
 # operator -- some of the query words, approximately matched), `exact` casts
 # narrow (match_phrase -- every word, contiguous and in order). Everything
-# wrapped around that query is identical, so it lives once in _es_leg() and
-# each leg is a thin wrapper with its own cache.
+# wrapped around that query is search/common.py's es_text_leg(); each leg
+# here is a thin wrapper with its own cache.
 # ---------------------------------------------------------------------------
 
 _EMPTY_ES = pd.DataFrame(columns=["rank", "score", "video_id", "segment_id", "start_sec", "text"])
+_ES_FIELDS = ("video_id", "segment_id", "start_sec", "text")
 _fuzzy_cache = TTLCache(maxsize=256, ttl=300)
 _exact_cache = TTLCache(maxsize=256, ttl=300)
 
 
-def _es_leg(query, k: int, es_query: dict, cache: TTLCache, label: str):
-    """Returns (df, warning). warning is a user-facing str if ES was
-    unreachable, else None -- these legs need text,
-    so an image query short-circuits to an empty df with no warning."""
-    if is_image_query(query):
-        return _EMPTY_ES, None
-    cache_key = (query_hash(query), k)
-    if cache_key in cache:
-        return cache[cache_key], None
-    try:
-        ensure_asr_fuzzy_index()
-        es = get_es_client()
-        resp = es.search(index=config.ES_INDEX_ASR, size=k, query=es_query)
-    except Exception as e:
-        return _EMPTY_ES, f"[ASR {label}] Elasticsearch not reachable at {config.ES_HOST} ({e}) — showing other legs only."
-
-    rows = []
-    for rank, hit in enumerate(resp["hits"]["hits"], start=1):
-        src = hit["_source"]
-        rows.append({"rank": rank, "score": float(hit["_score"]), "video_id": src["video_id"],
-                      "segment_id": src["segment_id"], "start_sec": src["start_sec"], "text": src["text"]})
-    result = pd.DataFrame(rows)
-    cache[cache_key] = result
-    return result, None
-
-
 def search_asr_fuzzy(query, k: int = config.FETCH_K):
-    return _es_leg(query, k, {"match": {"text": {"query": query, "fuzziness": "AUTO"}}}, _fuzzy_cache, "fuzzy")
+    return es_text_leg(query, k, index=config.ES_INDEX_ASR, ensure_index=ensure_asr_fuzzy_index,
+                       es_query={"match": {"text": {"query": query, "fuzziness": "AUTO"}}},
+                       fields=_ES_FIELDS, cache=_fuzzy_cache, empty=_EMPTY_ES, label="ASR fuzzy")
 
 
 def search_asr_exact(query, k: int = config.FETCH_K):
@@ -152,28 +130,16 @@ def search_asr_exact(query, k: int = config.FETCH_K):
     "sut lun" finds nothing where "sụt lún" does. Runs against the same
     asr_segments index the fuzzy leg already uses -- no mapping change,
     no reindex."""
-    return _es_leg(query, k, {"match_phrase": {"text": {"query": query}}}, _exact_cache, "exact")
+    return es_text_leg(query, k, index=config.ES_INDEX_ASR, ensure_index=ensure_asr_fuzzy_index,
+                       es_query={"match_phrase": {"text": {"query": query}}},
+                       fields=_ES_FIELDS, cache=_exact_cache, empty=_EMPTY_ES, label="ASR exact")
 
 
 def rrf_fuse_asr(named_dfs: dict, k: int = config.RRF_K, top_n: int = config.DISPLAY_N) -> pd.DataFrame:
-    scores, extra = {}, {}
-    for df in named_dfs.values():
-        if df is None or df.empty:
-            continue
-        for _, row in df.iterrows():
-            key = (row["video_id"], int(row["segment_id"]))
-            scores[key] = scores.get(key, 0.0) + 1.0 / (k + row["rank"])
-            e = extra.setdefault(key, {"text": row.get("text"), "start_sec": row.get("start_sec"), "frame_id": row.get("frame_id")})
-            if pd.isna(e.get("frame_id")) and not pd.isna(row.get("frame_id", np.nan)):
-                e["frame_id"] = row["frame_id"]
-    rows = [{"video_id": vid, "segment_id": sid, "rrf_score": s, **extra[(vid, sid)]}
-            for (vid, sid), s in scores.items()]
-    out = pd.DataFrame(rows)
-    if out.empty:
-        return out
-    out = out.sort_values("rrf_score", ascending=False).reset_index(drop=True)
-    out["rank"] = np.arange(1, len(out) + 1)
-    return out.head(top_n)
+    """Segment-level: keyed on (video_id, segment_id). frame_id is backfilled
+    from a later leg because only the SigLIP2 leg carries one."""
+    return rrf_fuse(named_dfs, ("video_id", "segment_id"), ("text", "start_sec", "frame_id"),
+                    backfill=("frame_id",), k=k, top_n=top_n)
 
 
 def attach_keyframe_asr(df: pd.DataFrame) -> pd.DataFrame:

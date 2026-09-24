@@ -5,7 +5,8 @@ computation, apply_filters before RRF, the same skip messages for picture
 queries, and graceful degrade when Elasticsearch is down.
 """
 
-from typing import List, Literal, Optional
+from dataclasses import dataclass
+from typing import Callable, List, Literal, Optional
 
 from fastapi import APIRouter
 from pydantic import BaseModel
@@ -20,11 +21,11 @@ from ..filters.lot import apply_filters, parse_lot_range
 from ..search import asr as asr_mod
 from ..search import caption as cap_mod
 from ..search import keyframe as kf
-from ..search import mixed as mixed_mod
 from ..search import ocr as ocr_mod
 from ..search import summary as sum_mod
-from ..search import trake as trake_mod
-from ..search.common import df_to_results
+from ..search.common import df_to_results, rrf_fuse
+from ..search.composite import trake as trake_mod
+from .schemas import LegResult, QuerySearchRequest, SearchScope
 
 router = APIRouter()
 
@@ -33,22 +34,8 @@ router = APIRouter()
 _SKIP_NOTHING_TO_FUSE = "Skipped — picture queries only ever have one active leg (SigLIP2), nothing to fuse."
 
 
-class LegResult(BaseModel):
-    skipped: Optional[str] = None
-    warning: Optional[str] = None
-    results: list = []
-
-
-class KeyframeSearchRequest(BaseModel):
-    query: Optional[str] = None
-    image_id: Optional[str] = None
-    top_k: int = config.DISPLAY_N
-    video_filter: str = ""
-    lot_filter: str = ""
-    exclude_lot: bool = False
-    od_filter: str = ""
-    facet_field: str = ""
-    facet_value: str = ""
+class KeyframeSearchRequest(QuerySearchRequest):
+    pass
 
 
 class KeyframeSearchResponse(BaseModel):
@@ -80,12 +67,15 @@ def search_keyframe(body: KeyframeSearchRequest):
 
 
 # ---------------------------------------------------------------------------
-# ASR / Caption / Summary share one shape: a SigLIP2 leg + a fuzzy leg + RRF,
-# all resolved to a keyframe `n` via that signal's attach_keyframe_* before
-# df_to_results. OCR is the one-leg exception (its own endpoint, no RRF).
-# ASR alone carries a fourth leg, `exact` (Elasticsearch match_phrase) --
-# hence the default-off field on the shared request/response models below,
-# which Caption/Summary simply never set or read.
+# ASR / Caption / Summary share one shape: a SigLIP2 leg + Elasticsearch
+# leg(s) + RRF, all resolved to a keyframe `n` via that signal's
+# attach_keyframe_* before df_to_results. So they share one handler,
+# _run_text_signal(), and each endpoint only declares its _TextSignal:
+# which legs it has, how to attach `n`, how to fuse. OCR is the one-leg
+# exception (its own endpoint, no RRF). ASR alone carries a third leg,
+# `exact` (Elasticsearch match_phrase) -- hence the default-off field on the
+# shared request/response models below, which Caption/Summary simply never
+# set or read.
 # ---------------------------------------------------------------------------
 
 class TextSignalLegs(BaseModel):
@@ -95,16 +85,9 @@ class TextSignalLegs(BaseModel):
     rrf: bool = True
 
 
-class TextSignalSearchRequest(BaseModel):
-    query: Optional[str] = None
-    image_id: Optional[str] = None
-    top_k: int = config.DISPLAY_N
-    video_filter: str = ""
-    lot_filter: str = ""
-    exclude_lot: bool = False
-    od_filter: str = ""  # applied by ASR/Caption; ignored by Summary (video-level, no per-frame OD)
-    facet_field: str = ""
-    facet_value: str = ""
+class TextSignalSearchRequest(QuerySearchRequest):
+    # od_filter (inherited) is applied by ASR/Caption; ignored by Summary
+    # (video-level, no per-frame OD).
     legs: TextSignalLegs = TextSignalLegs()
 
 
@@ -115,142 +98,98 @@ class TextSignalSearchResponse(BaseModel):
     rrf: Optional[LegResult] = None
 
 
-@router.post("/api/search/asr", response_model=TextSignalSearchResponse)
-def search_asr(body: TextSignalSearchRequest):
+def _siglip_leg(search_fn):
+    """Adapt a SigLIP2 leg (returns a df) to the ES legs' (df, warning) shape."""
+    return lambda query, k: (search_fn(query, k=k), None)
+
+
+@dataclass(frozen=True)
+class _TextSignal:
+    legs: dict  # leg name (a TextSignalLegs field) -> fn(query, k) -> (df, warning), in RRF priority order
+    attach: Callable  # the signal's attach_keyframe_*
+    fuse: Callable  # the signal's rrf_fuse_*
+    od: bool = True  # Summary is video-level: no per-frame OD filter, no OD warning
+
+
+_ASR = _TextSignal(
+    legs={"siglip": _siglip_leg(asr_mod.search_siglip2_asr),
+          "fuzzy": asr_mod.search_asr_fuzzy,
+          "exact": asr_mod.search_asr_exact},
+    attach=asr_mod.attach_keyframe_asr, fuse=asr_mod.rrf_fuse_asr)
+_CAPTION = _TextSignal(
+    legs={"siglip": _siglip_leg(cap_mod.search_siglip2_caption),
+          "fuzzy": cap_mod.search_caption_fuzzy},
+    attach=cap_mod.attach_keyframe_caption, fuse=cap_mod.rrf_fuse_caption)
+_SUMMARY = _TextSignal(
+    legs={"siglip": _siglip_leg(sum_mod.search_siglip2_summary),
+          "fuzzy": sum_mod.search_summary_fuzzy},
+    attach=sum_mod.attach_keyframe_summary, fuse=sum_mod.rrf_fuse_summary, od=False)
+
+
+def _run_text_signal(body: TextSignalSearchRequest, sig: _TextSignal) -> TextSignalSearchResponse:
     query = resolve_query(body.query, body.image_id)
     top_k = body.top_k
     fetch_k = max(config.FETCH_K, top_k)
     lot_filter = parse_lot_range(body.lot_filter, body.exclude_lot)
     image_query = is_image_query(query)
-    od_matched, od_unmatched = od.match_classes(body.od_filter)
-    od_warning = od.unmatched_warning(od_unmatched)
-    # Only the siglip leg (below) is subject to the 64-token window -- the
-    # fuzzy leg's own warning, further down, is untouched by this.
+    od_matched, od_warning = None, None
+    if sig.od:
+        od_matched, od_unmatched = od.match_classes(body.od_filter)
+        od_warning = od.unmatched_warning(od_unmatched)
+    # Only the siglip leg is subject to the 64-token window -- the ES legs'
+    # own warnings are untouched by this.
     trunc_warning = None if image_query else siglip2_long_query_note(query)
 
-    siglip_df = fuzzy_df = exact_df = None
-    fuzzy_warning = exact_warning = None
-    if body.legs.siglip or body.legs.rrf:
-        siglip_df = apply_filters(asr_mod.search_siglip_asr(query, k=fetch_k), body.video_filter, lot_filter)
-        siglip_df = md.apply_facet_filter(siglip_df, body.facet_field, body.facet_value)
-    if body.legs.fuzzy or body.legs.rrf:
-        fuzzy_df, fuzzy_warning = asr_mod.search_asr_fuzzy(query, k=fetch_k)
-        fuzzy_df = apply_filters(fuzzy_df, body.video_filter, lot_filter)
-        fuzzy_df = md.apply_facet_filter(fuzzy_df, body.facet_field, body.facet_value)
-    if body.legs.exact or body.legs.rrf:
-        exact_df, exact_warning = asr_mod.search_asr_exact(query, k=fetch_k)
-        exact_df = apply_filters(exact_df, body.video_filter, lot_filter)
-        exact_df = md.apply_facet_filter(exact_df, body.facet_field, body.facet_value)
+    # A leg runs if it's shown on its own or feeds the RRF.
+    dfs, warnings = {}, {}
+    for name, search in sig.legs.items():
+        dfs[name] = warnings[name] = None
+        if getattr(body.legs, name) or body.legs.rrf:
+            df, warnings[name] = search(query, fetch_k)
+            df = apply_filters(df, body.video_filter, lot_filter)
+            dfs[name] = md.apply_facet_filter(df, body.facet_field, body.facet_value)
+
+    def results(df, score_col):
+        df = sig.attach(df)
+        if sig.od:
+            df = od.apply_od_filter(df, od_matched)
+        return df_to_results(df.head(top_k), score_col, "text")
 
     resp = TextSignalSearchResponse()
-    if body.legs.siglip:
-        filtered = od.apply_od_filter(asr_mod.attach_keyframe_asr(siglip_df), od_matched)
-        resp.siglip = LegResult(warning=trunc_warning or od_warning, results=df_to_results(filtered.head(top_k), "score", "text"))
-    if body.legs.fuzzy:
-        filtered = od.apply_od_filter(asr_mod.attach_keyframe_asr(fuzzy_df), od_matched)
-        resp.fuzzy = LegResult(warning=fuzzy_warning or od_warning, results=df_to_results(filtered.head(top_k), "score", "text"))
-    if body.legs.exact:
-        filtered = od.apply_od_filter(asr_mod.attach_keyframe_asr(exact_df), od_matched)
-        resp.exact = LegResult(warning=exact_warning or od_warning, results=df_to_results(filtered.head(top_k), "score", "text"))
+    for name in sig.legs:
+        if getattr(body.legs, name):
+            leg_warning = trunc_warning if name == "siglip" else warnings[name]
+            setattr(resp, name, LegResult(warning=leg_warning or od_warning, results=results(dfs[name], "score")))
     if body.legs.rrf:
         if image_query:
             resp.rrf = LegResult(skipped=_SKIP_NOTHING_TO_FUSE)
         else:
-            fused = asr_mod.attach_keyframe_asr(asr_mod.rrf_fuse_asr({"siglip_asr": siglip_df, "fuzzy": fuzzy_df, "exact": exact_df}, top_n=fetch_k))
-            fused = od.apply_od_filter(fused, od_matched)
-            resp.rrf = LegResult(warning=od_warning, results=df_to_results(fused.head(top_k), "rrf_score", "text"))
+            fused = sig.fuse(dfs, top_n=fetch_k)
+            resp.rrf = LegResult(warning=od_warning, results=results(fused, "rrf_score"))
     return resp
+
+
+@router.post("/api/search/asr", response_model=TextSignalSearchResponse)
+def search_asr(body: TextSignalSearchRequest):
+    return _run_text_signal(body, _ASR)
 
 
 @router.post("/api/search/caption", response_model=TextSignalSearchResponse)
 def search_caption(body: TextSignalSearchRequest):
-    query = resolve_query(body.query, body.image_id)
-    top_k = body.top_k
-    fetch_k = max(config.FETCH_K, top_k)
-    lot_filter = parse_lot_range(body.lot_filter, body.exclude_lot)
-    image_query = is_image_query(query)
-    od_matched, od_unmatched = od.match_classes(body.od_filter)
-    od_warning = od.unmatched_warning(od_unmatched)
-    # Only the siglip leg (below) is subject to the 64-token window -- the
-    # fuzzy leg's own warning, further down, is untouched by this.
-    trunc_warning = None if image_query else siglip2_long_query_note(query)
-
-    siglip_df = fuzzy_df = None
-    fuzzy_warning = None
-    if body.legs.siglip or body.legs.rrf:
-        siglip_df = apply_filters(cap_mod.search_siglip_caption(query, k=fetch_k), body.video_filter, lot_filter)
-        siglip_df = md.apply_facet_filter(siglip_df, body.facet_field, body.facet_value)
-    if body.legs.fuzzy or body.legs.rrf:
-        fuzzy_df, fuzzy_warning = cap_mod.search_caption_fuzzy(query, k=fetch_k)
-        fuzzy_df = apply_filters(fuzzy_df, body.video_filter, lot_filter)
-        fuzzy_df = md.apply_facet_filter(fuzzy_df, body.facet_field, body.facet_value)
-
-    resp = TextSignalSearchResponse()
-    if body.legs.siglip:
-        filtered = od.apply_od_filter(cap_mod.attach_keyframe_caption(siglip_df), od_matched)
-        resp.siglip = LegResult(warning=trunc_warning or od_warning, results=df_to_results(filtered.head(top_k), "score", "text"))
-    if body.legs.fuzzy:
-        filtered = od.apply_od_filter(cap_mod.attach_keyframe_caption(fuzzy_df), od_matched)
-        resp.fuzzy = LegResult(warning=fuzzy_warning or od_warning, results=df_to_results(filtered.head(top_k), "score", "text"))
-    if body.legs.rrf:
-        if image_query:
-            resp.rrf = LegResult(skipped=_SKIP_NOTHING_TO_FUSE)
-        else:
-            fused = cap_mod.attach_keyframe_caption(cap_mod.rrf_fuse_caption({"siglip_caption": siglip_df, "fuzzy": fuzzy_df}, top_n=fetch_k))
-            fused = od.apply_od_filter(fused, od_matched)
-            resp.rrf = LegResult(warning=od_warning, results=df_to_results(fused.head(top_k), "rrf_score", "text"))
-    return resp
+    return _run_text_signal(body, _CAPTION)
 
 
 @router.post("/api/search/summary", response_model=TextSignalSearchResponse)
 def search_summary(body: TextSignalSearchRequest):
-    query = resolve_query(body.query, body.image_id)
-    top_k = body.top_k
-    fetch_k = max(config.FETCH_K, top_k)
-    lot_filter = parse_lot_range(body.lot_filter, body.exclude_lot)
-    image_query = is_image_query(query)
-    # Only the siglip leg (below) is subject to the 64-token window -- the
-    # fuzzy leg's own warning, further down, is untouched by this.
-    trunc_warning = None if image_query else siglip2_long_query_note(query)
-
-    siglip_df = fuzzy_df = None
-    fuzzy_warning = None
-    if body.legs.siglip or body.legs.rrf:
-        siglip_df = apply_filters(sum_mod.search_siglip_summary(query, k=fetch_k), body.video_filter, lot_filter)
-        siglip_df = md.apply_facet_filter(siglip_df, body.facet_field, body.facet_value)
-    if body.legs.fuzzy or body.legs.rrf:
-        fuzzy_df, fuzzy_warning = sum_mod.search_summary_fuzzy(query, k=fetch_k)
-        fuzzy_df = apply_filters(fuzzy_df, body.video_filter, lot_filter)
-        fuzzy_df = md.apply_facet_filter(fuzzy_df, body.facet_field, body.facet_value)
-
-    resp = TextSignalSearchResponse()
-    if body.legs.siglip:
-        resp.siglip = LegResult(warning=trunc_warning, results=df_to_results(sum_mod.attach_keyframe_summary(siglip_df).head(top_k), "score", "text"))
-    if body.legs.fuzzy:
-        resp.fuzzy = LegResult(warning=fuzzy_warning, results=df_to_results(sum_mod.attach_keyframe_summary(fuzzy_df).head(top_k), "score", "text"))
-    if body.legs.rrf:
-        if image_query:
-            resp.rrf = LegResult(skipped=_SKIP_NOTHING_TO_FUSE)
-        else:
-            fused = sum_mod.attach_keyframe_summary(sum_mod.rrf_fuse_summary({"siglip_summary": siglip_df, "fuzzy": fuzzy_df}, top_n=top_k))
-            resp.rrf = LegResult(results=df_to_results(fused, "rrf_score", "text"))
-    return resp
+    return _run_text_signal(body, _SUMMARY)
 
 
 # ---------------------------------------------------------------------------
 # OCR: single leg by design, no embedding leg, no RRF.
 # ---------------------------------------------------------------------------
 
-class OcrSearchRequest(BaseModel):
-    query: Optional[str] = None
-    image_id: Optional[str] = None
-    top_k: int = config.DISPLAY_N
-    video_filter: str = ""
-    lot_filter: str = ""
-    exclude_lot: bool = False
-    od_filter: str = ""
-    facet_field: str = ""
-    facet_value: str = ""
+class OcrSearchRequest(QuerySearchRequest):
+    pass
 
 
 class OcrSearchResponse(BaseModel):
@@ -286,7 +225,7 @@ def search_ocr(body: OcrSearchRequest):
 # sub-query), combined with a user-weighted RRF (0-3 per sub-query). Each
 # sub-query is resolved via trake_search_event() -- the exact same
 # per-signal search + internal RRF every standalone signal route and TRAKE
-# event already use -- then rrf_fuse_weighted() combines them keyed by
+# event already use -- then a weighted rrf_fuse() combines them keyed by
 # sub-query index (not signal name), so two sub-queries can share a signal
 # without colliding. TRAKE's own per-event "Mixed" signal option (backed by
 # the shared mixedConfig weights/legs) is unrelated and unchanged.
@@ -298,15 +237,9 @@ class MixedSubQuery(BaseModel):
     weight: int = 1
 
 
-class MixedSearchRequest(BaseModel):
+class MixedSearchRequest(SearchScope):
     queries: List[MixedSubQuery] = []
-    top_k: int = config.DISPLAY_N
-    video_filter: str = ""
-    lot_filter: str = ""
-    exclude_lot: bool = False
     od_filter: str = ""
-    facet_field: str = ""
-    facet_value: str = ""
     show_transcript: bool = False
 
 
@@ -359,7 +292,7 @@ def search_mixed(body: MixedSearchRequest):
     # trake_search_event() already applies the facet filter per sub-query,
     # so only OD filtering (which it doesn't apply) needs to happen here,
     # post-fusion, same as every per-signal route above.
-    fused = mixed_mod.rrf_fuse_weighted(sub_dfs, sub_weights, top_n=fetch_k)
+    fused = rrf_fuse(sub_dfs, ("video_id", "n"), weights=sub_weights, top_n=fetch_k)
     fused = od.apply_od_filter(fused, od_matched)
     results = df_to_results(fused.head(top_k), "rrf_score")
     if body.show_transcript:

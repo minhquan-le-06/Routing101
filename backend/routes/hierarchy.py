@@ -16,21 +16,17 @@ from pydantic import BaseModel
 from .. import config
 from ..core.query import resolve_query
 from ..filters.lot import parse_lot_range
-from ..search import hierarchy as hier_mod
+from ..search.composite import hierarchy as hier_mod
+from .schemas import SearchScope
 
 router = APIRouter()
 
 
-class HierarchySearchRequest(BaseModel):
+class HierarchySearchRequest(SearchScope):
+    # No od_filter: Hierarchy's drill-down is a picture query per video.
     query: Optional[str] = None
     image_id: Optional[str] = None
-    top_k: int = config.DISPLAY_N
     top_g: int = config.TOP_G_DEFAULT
-    video_filter: str = ""
-    lot_filter: str = ""
-    exclude_lot: bool = False
-    facet_field: str = ""
-    facet_value: str = ""
 
 
 class HierarchyGroup(BaseModel):
@@ -84,7 +80,7 @@ class HierarchyExpandResponse(BaseModel):
     frames: list = []
 
 
-@router.post("/api/hierarchy/expand", response_model=HierarchyExpandResponse)
+@router.post("/api/search/hierarchy/expand", response_model=HierarchyExpandResponse)
 def expand_hierarchy(body: HierarchyExpandRequest):
     fetch_k = max(config.FETCH_K, body.top_k)
     frames = hier_mod.hierarchy_expand_group(body.video_id, body.step1_frames, body.top_g, fetch_k, seed_n=body.seed_n)

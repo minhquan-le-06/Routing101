@@ -25,14 +25,14 @@ export const searchSummary = (body) => postJson("/api/search/summary", body);
 export const searchMixed = (body) => postJson("/api/search/mixed", body);
 export const searchTrake = (body) => postJson("/api/search/trake", body);
 export const searchHierarchy = (body) => postJson("/api/search/hierarchy", body);
-export const expandHierarchy = (body) => postJson("/api/hierarchy/expand", body);
+export const expandHierarchy = (body) => postJson("/api/search/hierarchy/expand", body);
 export const getFacets = () => jsonFetch("/api/facets");
 export const getProfile = () => jsonFetch("/api/profile");
 
 // Backend-side search settings (query chunking). Separate from settings.js's
 // localStorage preferences on purpose: this one changes what a search
 // returns and is applied inside the backend process, so it can't be a
-// per-browser value -- see backend/main.py's /api/settings.
+// per-browser value -- see backend/routes/settings.py's /api/settings.
 export const getSearchSettings = () => jsonFetch("/api/settings");
 export const setSearchSettings = (body) => postJson("/api/settings", body);
 
@@ -45,7 +45,7 @@ export function getNeighbors(videoId, centerN, before, after) {
 
 // n omitted (undefined/null) starts playback at 0:00 with no keyframe
 // lookup -- used by the TRAKE Export tab's curation panel to play a bare
-// video_id before any event exists yet (see backend/routes/playback.py).
+// video_id before any event exists yet (see backend/routes/media.py).
 export function getPlayback(videoId, n) {
     const params = { video_id: videoId };
     if (n !== undefined && n !== null) params.n = n;

@@ -1,5 +1,5 @@
 """
-backend/search/trake.py -- TRAKE: an ordered list of event sub-queries
+backend/search/composite/trake.py -- TRAKE: an ordered list of event sub-queries
 (each with its own text + one of Keyframe/ASR/Caption/OCR/Mixed), find
 videos where every event's best-matching frame occurs in the declared
 order, plus an optional context (E0) query always matched via Summary --
@@ -15,15 +15,16 @@ embedding models, no new per-signal fusion logic.
 
 import pandas as pd
 
-from ..core.keyframes import keyframe_timestamp
-from ..filters import metadata as md
-from ..filters.lot import apply_filters
-from . import asr as asr_mod
-from . import caption as cap_mod
-from . import keyframe as kf
+from ...core.keyframes import keyframe_timestamp
+from ...filters import metadata as md
+from ...filters.lot import apply_filters
+from .. import asr as asr_mod
+from .. import caption as cap_mod
+from .. import keyframe as kf
+from .. import ocr as ocr_mod
+from .. import summary as sum_mod
+from ..common import rrf_fuse
 from . import mixed as mixed_mod
-from . import ocr as ocr_mod
-from . import summary as sum_mod
 
 _EMPTY = pd.DataFrame(columns=["video_id", "n", "rank", "score", "text"])
 
@@ -54,14 +55,14 @@ def trake_search_event(query: str, signal: str, fetch_k: int, video_filter: str 
         # would silently reshuffle existing Mixed/TRAKE results. The
         # standalone /api/search/asr RRF does fuse exact -- the two diverge
         # on purpose.
-        siglip_df = _scoped(asr_mod.search_siglip_asr(query, k=fetch_k))
+        siglip_df = _scoped(asr_mod.search_siglip2_asr(query, k=fetch_k))
         fuzzy_raw, _w = asr_mod.search_asr_fuzzy(query, k=fetch_k)
         fuzzy_df = _scoped(fuzzy_raw)
         fused = asr_mod.attach_keyframe_asr(asr_mod.rrf_fuse_asr({"siglip_asr": siglip_df, "fuzzy": fuzzy_df}, top_n=fetch_k))
         return _EMPTY if fused is None or fused.empty else fused.rename(columns={"rrf_score": "score"})[["video_id", "n", "rank", "score", "text"]]
 
     if signal == "Caption":
-        siglip_df = _scoped(cap_mod.search_siglip_caption(query, k=fetch_k))
+        siglip_df = _scoped(cap_mod.search_siglip2_caption(query, k=fetch_k))
         fuzzy_raw, _w = cap_mod.search_caption_fuzzy(query, k=fetch_k)
         fuzzy_df = _scoped(fuzzy_raw)
         fused = cap_mod.attach_keyframe_caption(cap_mod.rrf_fuse_caption({"siglip_caption": siglip_df, "fuzzy": fuzzy_df}, top_n=fetch_k))
@@ -73,14 +74,14 @@ def trake_search_event(query: str, signal: str, fetch_k: int, video_filter: str 
         return _EMPTY if df is None or df.empty else df[["video_id", "n", "rank", "score", "text"]]
 
     if signal == "Summary":
-        siglip_df = _scoped(sum_mod.search_siglip_summary(query, k=fetch_k))
+        siglip_df = _scoped(sum_mod.search_siglip2_summary(query, k=fetch_k))
         fuzzy_raw, _w = sum_mod.search_summary_fuzzy(query, k=fetch_k)
         fuzzy_df = _scoped(fuzzy_raw)
         fused = sum_mod.attach_keyframe_summary(sum_mod.rrf_fuse_summary({"siglip_summary": siglip_df, "fuzzy": fuzzy_df}, top_n=fetch_k))
         return _EMPTY if fused is None or fused.empty else fused.rename(columns={"rrf_score": "score"})[["video_id", "n", "rank", "score", "text"]]
 
     if signal == "Mixed":
-        # rrf_fuse_weighted only ever reads "rank" off its inputs (never a
+        # The weighted rrf_fuse only ever reads "rank" off its inputs (never a
         # score column), so the existing _mixed_*_df helpers -- already
         # trimmed to [video_id, n, rank] -- are safe to reuse unchanged;
         # the per-event "score" below is the weighted-RRF score, same as
@@ -99,7 +100,7 @@ def trake_search_event(query: str, signal: str, fetch_k: int, video_filter: str 
             signal_dfs["OCR"] = mixed_mod._mixed_ocr_df(query, fetch_k, video_filter, lot_filter)
         if not signal_dfs:
             return _EMPTY
-        fused = mixed_mod.rrf_fuse_weighted(signal_dfs, weights, top_n=fetch_k)
+        fused = rrf_fuse(signal_dfs, ("video_id", "n"), weights=weights, top_n=fetch_k)
         fused = md.apply_facet_filter(fused, facet_field, facet_value)
         return _EMPTY if fused.empty else fused.rename(columns={"rrf_score": "score"})[["video_id", "n", "rank", "score"]]
 

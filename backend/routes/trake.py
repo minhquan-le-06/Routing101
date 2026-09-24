@@ -1,6 +1,6 @@
 """
 backend/routes/trake.py -- TRAKE endpoint, on top of
-backend/search/trake.py's ranking logic. Each
+backend/search/composite/trake.py's ranking logic. Each
 candidate's matched events carry a thumbnail_url (frontend renders them
 directly, same shape convention as everywhere else) and their own
 `timestamp` (seconds) so the frontend can drive TRAKE's marker-bar
@@ -17,7 +17,8 @@ from .. import config
 from ..core.keyframes import thumbnail_url
 from ..core.models import get_query_chunk_strategy, siglip2_long_query_tokens
 from ..filters.lot import parse_lot_range
-from ..search import trake as trake_mod
+from ..search.composite import trake as trake_mod
+from .schemas import SearchScope
 
 router = APIRouter()
 
@@ -36,16 +37,10 @@ class TrakeEvent(BaseModel):
     signal: Literal["Keyframe", "ASR", "Caption", "OCR", "Mixed"]
 
 
-class TrakeSearchRequest(BaseModel):
+class TrakeSearchRequest(SearchScope):
     context: Optional[TrakeContext] = None
     events: List[TrakeEvent]
-    top_k: int = config.DISPLAY_N
     top_v: int = 15
-    video_filter: str = ""
-    lot_filter: str = ""
-    exclude_lot: bool = False
-    facet_field: str = ""
-    facet_value: str = ""
     mixed_weights: Dict[str, int] = {}
     mixed_legs: Dict[str, bool] = {}
 

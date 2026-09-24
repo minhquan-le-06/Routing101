@@ -12,9 +12,10 @@ import pandas as pd
 from cachetools import TTLCache
 
 from .. import config
-from ..core.es import ensure_summary_fuzzy_index, get_es_client
-from ..core.models import encode_text_siglip2, is_image_query, siglip2_query_mat
-from .common import faiss_search_pooled, l2_normalize, query_hash, video_id_from_filename
+from ..core.es import ensure_summary_fuzzy_index
+from ..core.models import encode_text_siglip2, siglip2_query_mat
+from .common import (es_text_leg, faiss_search_pooled, l2_normalize, query_hash, rrf_fuse,
+                     video_id_from_filename)
 
 _index = None
 _meta: pd.DataFrame = None
@@ -46,7 +47,7 @@ def ensure_summary_embeddings():
     return True
 
 
-def build_siglip_summary_index():
+def build_siglip2_summary_index():
     global _index, _meta
     ensure_summary_embeddings()
     if not (config.SIGLIP_SUMMARY_FAISS.exists() and config.SIGLIP_SUMMARY_META.exists()):
@@ -97,7 +98,7 @@ def build_siglip_summary_index():
 
 def _get_index():
     if _index is None:
-        build_siglip_summary_index()
+        build_siglip2_summary_index()
     return _index, _meta
 
 
@@ -114,7 +115,7 @@ _CHUNK_OVERFETCH = 4
 _EMPTY_SIGLIP = pd.DataFrame(columns=["rank", "score", "video_id", "text"])
 
 
-def search_siglip_summary(query, k: int = config.FETCH_K) -> pd.DataFrame:
+def search_siglip2_summary(query, k: int = config.FETCH_K) -> pd.DataFrame:
     cache_key = (query_hash(query), k)
     if cache_key in _siglip_cache:
         return _siglip_cache[cache_key]
@@ -155,45 +156,15 @@ _EMPTY_FUZZY = pd.DataFrame(columns=["rank", "score", "video_id", "text"])
 
 
 def search_summary_fuzzy(query, k: int = config.FETCH_K):
-    if is_image_query(query):
-        return _EMPTY_FUZZY, None
-    cache_key = (query_hash(query), k)
-    if cache_key in _fuzzy_cache:
-        return _fuzzy_cache[cache_key], None
-    try:
-        ensure_summary_fuzzy_index()
-        es = get_es_client()
-        resp = es.search(index=config.ES_INDEX_SUMMARY, size=k, query={
-            "match": {"text": {"query": query, "fuzziness": "AUTO"}}
-        })
-    except Exception as e:
-        return _EMPTY_FUZZY, f"[Summary fuzzy] Elasticsearch not reachable at {config.ES_HOST} ({e}) — showing other legs only."
-
-    rows = []
-    for rank, hit in enumerate(resp["hits"]["hits"], start=1):
-        src = hit["_source"]
-        rows.append({"rank": rank, "score": float(hit["_score"]), "video_id": src["video_id"], "text": src["text"]})
-    result = pd.DataFrame(rows)
-    _fuzzy_cache[cache_key] = result
-    return result, None
+    return es_text_leg(query, k, index=config.ES_INDEX_SUMMARY, ensure_index=ensure_summary_fuzzy_index,
+                       es_query={"match": {"text": {"query": query, "fuzziness": "AUTO"}}},
+                       fields=("video_id", "text"), cache=_fuzzy_cache,
+                       empty=_EMPTY_FUZZY, label="Summary fuzzy")
 
 
 def rrf_fuse_summary(named_dfs: dict, k: int = config.RRF_K, top_n: int = config.DISPLAY_N) -> pd.DataFrame:
-    scores, extra = {}, {}
-    for df in named_dfs.values():
-        if df is None or df.empty:
-            continue
-        for _, row in df.iterrows():
-            key = row["video_id"]
-            scores[key] = scores.get(key, 0.0) + 1.0 / (k + row["rank"])
-            extra.setdefault(key, {"text": row.get("text")})
-    rows = [{"video_id": vid, "rrf_score": s, **extra[vid]} for vid, s in scores.items()]
-    out = pd.DataFrame(rows)
-    if out.empty:
-        return out
-    out = out.sort_values("rrf_score", ascending=False).reset_index(drop=True)
-    out["rank"] = np.arange(1, len(out) + 1)
-    return out.head(top_n)
+    """Video-level: keyed on video_id alone."""
+    return rrf_fuse(named_dfs, ("video_id",), ("text",), k=k, top_n=top_n)
 
 
 def attach_keyframe_summary(df: pd.DataFrame) -> pd.DataFrame:

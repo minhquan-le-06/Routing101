@@ -1,5 +1,5 @@
 """
-backend/search/hierarchy.py -- Hierarchy Search, three steps:
+backend/search/composite/hierarchy.py -- Hierarchy Search, three steps:
   1. A SigLIP2 frame search (text or picture query), grouped by video like
      Keyframe's "group by video".
   2. Per video, a seed-frame picker -- which of that group's own frames
@@ -17,11 +17,11 @@ meaningful text/RRF path to offer here at all.
 import pandas as pd
 from PIL import Image
 
-from ..core.keyframes import thumbnail_disk_path
-from ..filters import metadata as md
-from ..filters.lot import apply_filters
-from . import keyframe as kf
-from .common import df_to_results
+from ...core.keyframes import thumbnail_disk_path
+from ...filters import metadata as md
+from ...filters.lot import apply_filters
+from .. import keyframe as kf
+from ..common import df_to_results
 
 
 def hierarchy_expand_group(video_id: str, frames: list, top_g: int, fetch_k: int, seed_n: int = None) -> list:

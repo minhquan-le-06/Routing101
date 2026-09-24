@@ -14,7 +14,9 @@ import pandas as pd
 from PIL import Image
 
 from .. import config
+from ..core.es import get_es_client
 from ..core.keyframes import thumbnail_url
+from ..core.models import is_image_query
 
 
 def query_hash(query) -> str:
@@ -130,3 +132,81 @@ def df_to_results(df: pd.DataFrame, score_col: str, text_col: str = None) -> lis
             "thumbnail_url": thumbnail_url(r["video_id"], n),
         })
     return out
+
+
+# ---------------------------------------------------------------------------
+# Reciprocal-rank fusion -- every signal's RRF over its own legs, and Mixed's
+# weighted RRF across sub-queries, is this one function with a different key.
+# ---------------------------------------------------------------------------
+
+def rrf_fuse(named_dfs: dict, key_cols: tuple, extra_cols: tuple = (), *, weights: dict = None,
+             backfill: tuple = (), k: int = config.RRF_K, top_n: int = config.DISPLAY_N) -> pd.DataFrame:
+    """Fuse already-ranked dfs: a row's score is the sum over the dfs that
+    contain it of weight / (k + rank), keyed on `key_cols` (video_id as-is,
+    every other key column as int).
+
+    `extra_cols` are carried over from the first df a key appears in (dict
+    order of `named_dfs` = leg priority). `backfill` columns are the
+    exception: if that first value is NaN, a later df's non-NaN value fills
+    it in (ASR's frame_id, which only the SigLIP2 leg carries).
+
+    `weights` (by `named_dfs` key) makes it a weighted RRF, skipping any df
+    whose weight is 0/missing; without it every df counts once.
+
+    Returns the fused rows sorted by `rrf_score`, re-ranked 1..n, top `top_n`
+    -- or an empty df with no columns if nothing was fused."""
+    scores, extra = {}, {}
+    for name, df in named_dfs.items():
+        w = 1 if weights is None else weights.get(name, 0)
+        if not w or df is None or df.empty:
+            continue
+        for _, row in df.iterrows():
+            key = tuple(row[c] if c == "video_id" else int(row[c]) for c in key_cols)
+            scores[key] = scores.get(key, 0.0) + w * (1.0 / (k + row["rank"]))
+            e = extra.setdefault(key, {c: row.get(c) for c in extra_cols})
+            for c in backfill:
+                if pd.isna(e.get(c)) and not pd.isna(row.get(c, np.nan)):
+                    e[c] = row[c]
+    rows = [{**dict(zip(key_cols, key)), "rrf_score": s, **extra[key]} for key, s in scores.items()]
+    out = pd.DataFrame(rows)
+    if out.empty:
+        return out
+    out = out.sort_values("rrf_score", ascending=False).reset_index(drop=True)
+    out["rank"] = np.arange(1, len(out) + 1)
+    return out.head(top_n)
+
+
+# ---------------------------------------------------------------------------
+# Elasticsearch text legs -- ASR fuzzy/exact, Caption/OCR/Summary fuzzy all
+# wrap their query body in the same cache / ensure-index / degrade-on-error
+# shell, so it lives once here.
+# ---------------------------------------------------------------------------
+
+ES_DOWN_OTHER_LEGS = "showing other legs only."
+
+
+def es_text_leg(query, k: int, *, index: str, ensure_index, es_query: dict, fields: tuple,
+                cache, empty: pd.DataFrame, label: str, down_note: str = ES_DOWN_OTHER_LEGS):
+    """Returns (df, warning). warning is a user-facing str if ES was
+    unreachable, else None -- these legs need text, so an image query
+    short-circuits to `empty` with no warning. Each hit becomes a row of
+    rank, score, then `fields` straight off its `_source`."""
+    if is_image_query(query):
+        return empty, None
+    cache_key = (query_hash(query), k)
+    if cache_key in cache:
+        return cache[cache_key], None
+    try:
+        ensure_index()
+        es = get_es_client()
+        resp = es.search(index=index, size=k, query=es_query)
+    except Exception as e:
+        return empty, f"[{label}] Elasticsearch not reachable at {config.ES_HOST} ({e}) — {down_note}"
+
+    rows = []
+    for rank, hit in enumerate(resp["hits"]["hits"], start=1):
+        src = hit["_source"]
+        rows.append({"rank": rank, "score": float(hit["_score"]), **{f: src[f] for f in fields}})
+    result = pd.DataFrame(rows)
+    cache[cache_key] = result
+    return result, None

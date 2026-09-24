@@ -9,7 +9,7 @@ already up.
 ```
 backend/
   config.py           paths + constants (data lives outside the repo, see README's Prerequisites)
-  main.py             FastAPI app entry -- mounts routers + static frontend/media
+  main.py             FastAPI app entry -- startup (model + indices), mounts routers + static frontend/media
   export.py           AIC submission CSV row-generation logic (KIS/VQA/TRAKE)
   core/               built once, used everywhere
     models.py           SigLIP2 text/image tower, loaded once, shared across signals
@@ -20,9 +20,17 @@ backend/
     lot.py              video-id / lot-range filter (sidebar "Search in collection")
     objects.py          object-detection text filter (fuzzy class match)
     metadata.py         structured per-lot metadata facet filter
-  search/             per-signal search + RRF (keyframe, asr, caption, ocr, summary, mixed, hierarchy, trake)
-    common.py           query cache key, pooled FAISS search, result-shape contract (df_to_results)
-  routes/             FastAPI endpoints on top of search/ (+ export, facets, playback, neighbors, query_image)
+  search/             one module per base signal: keyframe, asr, caption, ocr, summary
+    common.py           shared: query cache key, pooled FAISS search, rrf_fuse(), es_text_leg(),
+                        result-shape contract (df_to_results)
+    composite/          modes built on the base signals: mixed, trake, hierarchy
+  routes/             FastAPI endpoints
+    schemas.py          shared request bases (SearchScope, QuerySearchRequest) + LegResult
+    search.py           /api/search/{keyframe,asr,caption,summary,ocr,mixed}
+    trake.py, hierarchy.py   /api/search/trake, /api/search/hierarchy(/expand)
+    export.py           /api/export/* (on top of backend/export.py)
+    media.py            /api/neighbors, /api/playback
+    facets.py, query_image.py, settings.py   /api/facets, /api/query-image, /api/profile + /api/settings
 frontend/
   index.html           main app shell
   export.html           standalone Export CSV page (opened in its own tab, see Export below)
@@ -80,7 +88,7 @@ Two profile-shaped differences in the data itself, both handled in the
 search modules rather than by reshaping the files:
 
 - **ASR** — the 1152 and 1536 transcript CSVs are segment-only, with no
-  `frame_id` column. `build_siglip_asr_index()` falls back to
+  `frame_id` column. `build_siglip2_asr_index()` falls back to
   `nearest_keyframe_n_by_time()`, the same resolution the ES fuzzy leg has
   always used, applied once at build time. Coverage differs by profile: 1152
   is missing ASR embeddings around L25 and reaches 773 of the corpus's 873
@@ -90,7 +98,7 @@ search modules rather than by reshaping the files:
   per summary, because SigLIP2's text tower only sees 64 tokens (see
   **Long queries** below) and a summary runs well past that — the 768
   profile silently truncated most of every summary it embedded. So the index holds one row per chunk, and
-  `search_siglip_summary()` overfetches and keeps each video's best-scoring
+  `search_siglip2_summary()` overfetches and keeps each video's best-scoring
   chunk (a max-pool) to hand one row per video to `rrf_fuse_summary`, which
   keys on `video_id` alone. A hit's text is the chunk that scored, not the
   whole paragraph — so a fused card can show chunk text from the SigLIP2

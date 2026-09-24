@@ -11,15 +11,13 @@ Then open http://localhost:8000/app/
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
 
 from . import config
 from .core.es import ensure_all_fuzzy_indices
-from .core.models import (DEVICE, QUERY_CHUNK_STRATEGIES, get_query_chunk_strategy,
-                          load_siglip2, set_query_chunk_strategy)
-from .routes import export, facets, hierarchy, neighbors, playback, query_image, search, trake
+from .core.models import DEVICE, load_siglip2
+from .routes import export, facets, hierarchy, media, query_image, search, settings, trake
 from .search import asr as asr_mod
 from .search import caption as cap_mod
 from .search import keyframe as kf
@@ -45,20 +43,20 @@ async def lifespan(app: FastAPI):
     # partly finished still starts and searches fine, just over fewer videos,
     # which is otherwise invisible until rankings look off for no reason.
     print("[startup] Keyframe — SigLIP2 frame index")
-    frame_index, frame_lookup = kf.build_frame_index(config.FRAME_SIGLIP2_GLOB)
+    frame_index, frame_lookup = kf.build_siglip2_frame_index(config.FRAME_SIGLIP2_GLOB)
     print(f"[startup]   {frame_index.ntotal} frames over "
           f"{frame_lookup['video_id'].nunique()} videos")
 
     print("[startup] ASR — SigLIP2 index")
-    asr_index, asr_meta = asr_mod.build_siglip_asr_index()
+    asr_index, asr_meta = asr_mod.build_siglip2_asr_index()
     print(f"[startup]   {asr_index.ntotal} segments over "
           f"{asr_meta['video_id'].nunique()} videos")
     print("[startup] Caption — SigLIP2 index")
-    cap_index, cap_meta = cap_mod.build_siglip_caption_index()
+    cap_index, cap_meta = cap_mod.build_siglip2_caption_index()
     print(f"[startup]   {cap_index.ntotal} captions over "
           f"{cap_meta['video_id'].nunique()} videos")
     print("[startup] Summary — embeddings + SigLIP2 index")
-    sum_index, sum_meta = sum_mod.build_siglip_summary_index()
+    sum_index, sum_meta = sum_mod.build_siglip2_summary_index()
     print(f"[startup]   {sum_index.ntotal} "
           f"{'chunks' if config.SUMMARY_CHUNKED else 'summaries'} over "
           f"{sum_meta['video_id'].nunique()} videos")
@@ -93,12 +91,12 @@ app = FastAPI(title="Routing101 by MiLF", lifespan=lifespan)
 
 app.include_router(search.router)
 app.include_router(facets.router)
-app.include_router(neighbors.router)
-app.include_router(playback.router)
+app.include_router(media.router)
 app.include_router(query_image.router)
 app.include_router(trake.router)
 app.include_router(hierarchy.router)
 app.include_router(export.router)
+app.include_router(settings.router)
 
 # Media: served directly from the existing AICData* directories, no copying.
 app.mount("/media/keyframes", StaticFiles(directory=config.THUMBNAIL_ROOT), name="keyframes")
@@ -107,43 +105,6 @@ app.mount("/media/video", StaticFiles(directory=config.VIDEO_DIR), name="video")
 # Frontend: static HTML/CSS/JS, served under /app so it doesn't collide
 # with /api and /media routes above.
 app.mount("/app", NoCacheStaticFiles(directory=config.REPO_ROOT / "frontend", html=True), name="frontend")
-
-
-@app.get("/api/profile")
-def profile():
-    """Which embedding profile this process loaded -- the frontend badges it
-    so two tabs on two ports can't be mistaken for each other."""
-    return {"profile": config.EMBED_PROFILE, "dim": config.EMBED_DIM,
-            "model_id": config.SIGLIP2_MODEL_ID}
-
-
-class SettingsRequest(BaseModel):
-    query_chunk_strategy: str
-
-
-def _settings_payload():
-    return {"query_chunk_strategy": get_query_chunk_strategy(),
-            "query_chunk_strategies": list(QUERY_CHUNK_STRATEGIES)}
-
-
-@app.get("/api/settings")
-def get_settings():
-    """Backend-side search settings -- currently just how an over-64-token
-    query is split for the SigLIP2 embedding legs (backend/core/models.py). Unlike
-    the frontend's own preferences these can't live in localStorage: they
-    change what a search returns, and the splitting happens in this process.
-    The settings dialog reads this on open so it shows the live value rather
-    than whatever the last tab happened to set."""
-    return _settings_payload()
-
-
-@app.post("/api/settings")
-def post_settings(body: SettingsRequest):
-    try:
-        set_query_chunk_strategy(body.query_chunk_strategy)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    return _settings_payload()
 
 
 @app.get("/")

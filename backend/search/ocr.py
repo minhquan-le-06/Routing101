@@ -8,37 +8,19 @@ import pandas as pd
 from cachetools import TTLCache
 
 from .. import config
-from ..core.es import ensure_ocr_fuzzy_index, get_es_client
-from ..core.models import is_image_query
-from .common import query_hash
+from ..core.es import ensure_ocr_fuzzy_index
+from .common import es_text_leg
 
 _fuzzy_cache = TTLCache(maxsize=256, ttl=300)
 _EMPTY_FUZZY = pd.DataFrame(columns=["rank", "score", "video_id", "frame_id", "text"])
 
 
 def search_ocr_fuzzy(query, k: int = config.FETCH_K):
-    if is_image_query(query):
-        return _EMPTY_FUZZY, None
-    cache_key = (query_hash(query), k)
-    if cache_key in _fuzzy_cache:
-        return _fuzzy_cache[cache_key], None
-    try:
-        ensure_ocr_fuzzy_index()
-        es = get_es_client()
-        resp = es.search(index=config.ES_INDEX_OCR, size=k, query={
-            "match": {"text": {"query": query, "fuzziness": "AUTO"}}
-        })
-    except Exception as e:
-        return _EMPTY_FUZZY, f"[OCR fuzzy] Elasticsearch not reachable at {config.ES_HOST} ({e}) — showing no results."
-
-    rows = []
-    for rank, hit in enumerate(resp["hits"]["hits"], start=1):
-        src = hit["_source"]
-        rows.append({"rank": rank, "score": float(hit["_score"]), "video_id": src["video_id"],
-                      "frame_id": src["frame_id"], "text": src["text"]})
-    result = pd.DataFrame(rows)
-    _fuzzy_cache[cache_key] = result
-    return result, None
+    # OCR has no other leg to fall back on, hence its own ES-down note.
+    return es_text_leg(query, k, index=config.ES_INDEX_OCR, ensure_index=ensure_ocr_fuzzy_index,
+                       es_query={"match": {"text": {"query": query, "fuzziness": "AUTO"}}},
+                       fields=("video_id", "frame_id", "text"), cache=_fuzzy_cache,
+                       empty=_EMPTY_FUZZY, label="OCR fuzzy", down_note="showing no results.")
 
 
 def attach_keyframe_ocr(df: pd.DataFrame) -> pd.DataFrame:
