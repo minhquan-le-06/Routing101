@@ -27,7 +27,7 @@ export flow, etc.), see [`ARCHITECTURE.md`](ARCHITECTURE.md) instead.
   whoever last ran the pipeline). Both tracks below need these, just
   staged in different places. The exact subfolders you need:
 
-  Shared by both embedding profiles (see the next section):
+  Shared by every embedding profile (see the next section):
 
   ```
   AICData/extracted/transcripts/                     raw ASR segments (bulk-indexed into ES)
@@ -35,6 +35,7 @@ export flow, etc.), see [`ARCHITECTURE.md`](ARCHITECTURE.md) instead.
   AICData/extracted/ocr/                             per-frame OCR text (bulk-indexed into ES)
   AICData/extracted/summaries/                       one-paragraph video summaries (raw text)
   AICData/extracted/filtered_objects/ (+class_vocab.csv)  per-frame OD detections + vocabulary
+  AICData/extracted/metadata/*.csv                  per-lot metadata (L25-L30) for the metadata filter
   AICData/map-keyframes/*.csv                       per-frame timestamps + native frame_idx
   AICData/keyframes/{video_id}/{n:03d}.jpg           thumbnails
   AICData/video/{video_id}.mp4                       source video (playback dialogs)

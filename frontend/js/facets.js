@@ -32,7 +32,7 @@ export async function initFacets(onFieldChange) {
     try {
         facets = await getFacets();
     } catch (e) {
-        // Backend unreachable or no pipeline/*.csv extracted yet -- leave
+        // Backend unreachable or no metadata/*.csv extracted yet -- leave
         // the "(none)" field option in place, filter stays a no-op.
         return;
     }

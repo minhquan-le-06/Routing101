@@ -1,6 +1,6 @@
 """
 backend/metadata_filter.py -- structured facet filter over the per-lot
-metadata extracted into pipeline/*.csv (subject/topic for L25, province for
+metadata extracted into AICData/extracted/metadata/*.csv (subject/topic for L25, province for
 L27-29, ...). Not every extracted CSV yields a good *facet* -- a facet needs
 low cardinality (a handful of pickable values), so this only exposes the two
 dimensions that qualify: "subject" (L25, 9 values) and "province" (L27-29,
@@ -45,14 +45,14 @@ def _load() -> dict:
         return _facets
     table: dict = {}
 
-    subj_path = config.PIPELINE_DIR / "L25_subjects_topics.csv"
+    subj_path = config.METADATA_DIR / "L25_subjects_topics.csv"
     if subj_path.exists():
         with open(subj_path, encoding="utf-8-sig", newline="") as f:
             for row in csv.DictReader(f):
                 _add(table, row["video_id"], "subject", row.get("subject"))
 
     for name in ("L27_episodes.csv", "L28_episodes.csv", "L29_episodes.csv"):
-        path = config.PIPELINE_DIR / name
+        path = config.METADATA_DIR / name
         if not path.exists():
             continue
         with open(path, encoding="utf-8-sig", newline="") as f:

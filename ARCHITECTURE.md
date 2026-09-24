@@ -25,9 +25,6 @@ frontend/
   js/export-dialog.js, export-page.js, export-ui.js   Export CSV tab: opener handoff, entry point, UI
   js/signals/          one module per signal, same render/search shape
   css/style.css
-pipeline/
-  build_class_vocab.py  builds the OD class vocabulary od_filter.py matches against
-  *.csv                 per-lot metadata extracted upstream (metadata_filter.py's source)
 scripts/
   _run_common.bat       shared Windows launch sequence (Docker -> ES container -> uvicorn), called by run.bat
   open_when_ready.bat   polls the app, opens the browser once it responds

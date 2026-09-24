@@ -100,11 +100,12 @@ TRANSCRIPTS_DIR = _EXTRACTED / "transcripts"
 CAPTIONING_DIR = _EXTRACTED / "captions"  # was captioning
 OCR_DIR = _EXTRACTED / "ocr"
 SUMMARY_DIR = _EXTRACTED / "summaries"
+METADATA_DIR = _EXTRACTED / "metadata"  # rule/LLM-extracted per-lot metadata CSVs, L25-L30 (backend/metadata_filter.py)
 
 # OD (object-detection) text filter (backend/od_filter.py) -- per-video
 # filtered-detections CSVs produced upstream by AICLab/preprocess/filter_apply.py
 # (outside this repo) plus the offline class vocabulary built from them by
-# pipeline/build_class_vocab.py.
+# AICLab/preprocess/build_class_vocab.py.
 FILTERED_OBJECT_DIR = _EXTRACTED / "filtered_objects"
 CLASS_VOCAB_CSV = FILTERED_OBJECT_DIR / "class_vocab.csv"
 
@@ -113,7 +114,6 @@ THUMBNAIL_ROOT = Path("D:/University/Summ26/AICData/keyframes")
 VIDEO_DIR = Path("D:/University/Summ26/AICData/video")  # TRAKE playback dialog
 
 INDEX_DIR = REPO_ROOT / "index" / _P["index_sub"]
-PIPELINE_DIR = REPO_ROOT / "pipeline"  # rule/LLM-extracted per-lot metadata CSVs (backend/metadata_filter.py)
 ASR_INDEX_DIR = INDEX_DIR / "asr"
 CAPTION_INDEX_DIR = INDEX_DIR / "caption"
 SUMMARY_INDEX_DIR = INDEX_DIR / "summary"
