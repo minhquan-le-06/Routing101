@@ -26,7 +26,7 @@ TOP_G_DEFAULT = 10   # Hierarchy Search: frames kept per video after drill-down 
 # indices, so holding several in one process would multiply a footprint this
 # project has already trimmed once on purpose (see ARCHITECTURE.md's Signals
 # table on the removed M-CLIP text tower). Run one process per profile on its
-# own port instead -- run_768.bat / run_1152.bat / run_1536.bat. They share
+# own port instead -- run.bat [768|1152|1536]. They share
 # Elasticsearch, /media, the OD vocabulary and the metadata facets; only the
 # embedding legs differ. Three at once will not fit in 32GB; two will.
 # ---------------------------------------------------------------------------

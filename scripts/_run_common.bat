@@ -1,7 +1,6 @@
 @echo off
-rem _run_common.bat -- shared launch sequence behind run_768.bat and
-rem run_1152.bat. Not meant to be run directly: the entry-point scripts set
-rem PROFILE and PORT, then `call` this.
+rem _run_common.bat -- shared launch sequence behind ..\run.bat. Not meant to
+rem be run directly: run.bat sets PROFILE and PORT, then `call`s this.
 rem
 rem Everything here is profile-independent on purpose -- one Docker check,
 rem one Elasticsearch container, one uvicorn invocation -- so a fix to the
@@ -10,11 +9,12 @@ rem into one launcher per profile and drifting.
 
 if "%PROFILE%"=="" (
     echo _run_common.bat is not meant to be run directly.
-    echo Use run_768.bat, run_1152.bat or run_1536.bat instead.
+    echo Use run.bat [768^|1152^|1536] from the repo root instead.
     exit /b 1
 )
 
-cd /d "%~dp0"
+rem This file lives in scripts\ -- uvicorn must start from the repo root.
+cd /d "%~dp0.."
 set "R101_EMBED=%PROFILE%"
 title Routing101 %PROFILE%d
 
@@ -44,8 +44,8 @@ if errorlevel 1 goto waitdocker
 echo Docker is up.
 :dockerup
 
-rem One "es" container serves both profiles -- the Elasticsearch indices are
-rem text-only and dimension-independent, so the second profile to start just
+rem One "es" container serves every profile -- the Elasticsearch indices are
+rem text-only and dimension-independent, so any later profile to start just
 rem finds them already there.
 echo Starting Elasticsearch container...
 docker start es >nul 2>&1

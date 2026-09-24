@@ -95,8 +95,8 @@ The app can run against any one of three SigLIP2 checkpoints. You pick one
 
 Selected with the `R101_EMBED` environment variable (`768`, `1152` or
 `1536`, default `768`), which `backend/config.py` reads once at import. On
-Windows the launcher scripts set it for you -- **`run_768.bat`**,
-**`run_1152.bat`** and **`run_1536.bat`**, all in the repo. On any other
+Windows the launcher sets it for you -- **`run.bat`** (768),
+**`run.bat 1152`** or **`run.bat 1536`**, from the repo root. On any other
 platform, set the env var yourself; see Track A step 4.
 
 Each profile is its own process on its own port, so you can run two at once
@@ -162,15 +162,15 @@ you get the 768 profile, exactly as before.
    -- start Docker if it isn't running, start (or create) the `es`
    container, wait for it, launch the backend, open your browser:
    ```
-   run_768.bat      768-dim profile  -> http://localhost:8000/app/
-   run_1152.bat     1152-dim profile -> http://localhost:8001/app/
-   run_1536.bat     1536-dim profile -> http://localhost:8002/app/
+   run.bat          768-dim profile  -> http://localhost:8000/app/   (also: double-click)
+   run.bat 1152     1152-dim profile -> http://localhost:8001/app/
+   run.bat 1536     1536-dim profile -> http://localhost:8002/app/
    ```
-   Run two if you want them side by side (all three at once won't fit in
-   32 GB). `stop_routing101.bat 8000` (or `8001`, `8002`) stops one without
-   touching Elasticsearch, so the next launch stays fast. All three
-   launchers are four-line wrappers over `_run_common.bat`, which holds the
-   shared bootstrap -- edit that one, not the three.
+   Run two in separate windows if you want them side by side (all three at
+   once won't fit in 32 GB). `scripts\stop.bat 8000` (or `8001`, `8002`)
+   stops one without touching Elasticsearch, so the next launch stays fast.
+   `run.bat` only picks the profile and port; the shared bootstrap lives in
+   `scripts\_run_common.bat` -- edit that one.
 
    Leave the launcher window open while you work; it is the live server
    log. Closing it (or Ctrl+C, then Y) stops the app.

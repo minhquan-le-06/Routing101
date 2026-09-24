@@ -1,15 +1,13 @@
 @echo off
-rem stop_routing101.bat [port] -- stops the backend started by run_768.bat,
-rem run_1152.bat or run_1536.bat (finds what's listening on that port and its
-rem uvicorn --reload parent process, kills both) without touching the
-rem Elasticsearch container -- ES stays up so the next run_routing101.bat
-rem launch skips its slow cold-start. Run `docker stop es` yourself if you
-rem want that stopped too.
+rem stop.bat [port] -- stops a backend started by run.bat (finds what's
+rem listening on that port and its uvicorn --reload parent process, kills
+rem both) without touching the Elasticsearch container -- ES stays up so the
+rem next run.bat launch skips its slow cold-start. Run `docker stop es`
+rem yourself if you want that stopped too.
 rem
-rem The port defaults to 8000, the 768-dim profile (run_768.bat). Pass 8001
-rem for the 1152-dim one (run_1152.bat) or 8002 for the 1536-dim one
-rem (run_1536.bat); they are separate processes, so stopping one leaves the
-rem others running.
+rem The port defaults to 8000, the 768-dim profile. Pass 8001 for 1152 or
+rem 8002 for 1536; profiles are separate processes, so stopping one leaves
+rem the others running.
 
 set "PORT=%~1"
 if "%PORT%"=="" set "PORT=8000"
