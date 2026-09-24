@@ -6,7 +6,7 @@
 
 import { searchMixed } from "../api.js";
 import { renderGrid } from "../render.js";
-import { signalSelectHtml } from "../signal-select.js";
+import { signalSelectHtml } from "../util.js";
 import { mixedQueryState, resetExportCandidates, scopeFilters, MIXED_QUERY_SIGNALS } from "../state.js";
 import { settings } from "../settings.js";
 

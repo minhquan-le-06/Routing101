@@ -53,7 +53,7 @@ exact (video_id, frame_idx_1..N) pick from watching the video directly, in
 KIS/VQA. There's no confirmed/unconfirmed distinction for TRAKE any more:
 curation happens per video (an ordered event list, each a native
 frame_idx, built by watching that video in the Export tab), row generation
-happens per video into an in-memory cache (frontend/js/export-ui.js), and
+happens per video into an in-memory cache (frontend/js/export/ui.js), and
 a human merges however many cached videos they curated into one final
 <=99-row CSV at export time -- see generate_trake_rows()'s docstring for
 the row-generation half of that, and ARCHITECTURE.md's "Export

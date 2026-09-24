@@ -1,0 +1,182 @@
+/* frontend/css/export.css -- the standalone Export CSV tab only
+   (export.html, js/export/*), on top of base.css. */
+
+/* ---------------------------------------------------------------------- */
+/* Export CSV tab page + its KIS/VQA answer and preview areas             */
+/* ---------------------------------------------------------------------- */
+
+.export-page {
+    max-width: 1800px;
+    margin: 0 auto;
+    padding: 1.5rem 2rem;
+}
+.export-page h2 { margin-top: 0; }
+
+.export-dialog input[type="text"], .export-dialog input[type="number"] {
+    width: 100%;
+    font-family: inherit;
+    font-size: 0.9rem;
+    padding: 0.4rem 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+/* Everything that used to be three separate rows (query-type segmented
+   control, Query#/Video ID/Frame ID/Change, Cancel/Export) shares one row
+   to save vertical space -- wraps rather than overflowing on a narrow
+   window. */
+.export-topbar {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+}
+.export-topbar .segmented { flex: none; }
+.export-topbar input#exp-name { flex: 0 0 330px; }
+.export-topbar .export-actions { flex: none; margin-left: auto; }
+
+.export-answer-area { margin: 0.75rem 0; }
+.export-answer-area input[type="text"] { margin-top: 0.5rem; }
+
+.export-answer-list { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.5rem; }
+.export-answer-card {
+    position: relative;
+    width: 286px;
+    font-size: 1.01rem;
+    padding: 0.39rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: #fff;
+}
+.export-answer-card[draggable="true"] { cursor: grab; }
+.export-answer-card .export-remove-btn {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    /* .thumb-wrap carries z-index:1 unconditionally (base.css's "Result
+       cards" section), which -- with no z-index of its own -- would paint
+       above this sibling button despite coming first in the markup. */
+    z-index: 200;
+    width: 26px;
+    height: 26px;
+    font-size: 0.91rem;
+}
+
+.export-preview-area {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+.export-preview-section { flex: 1 1 320px; min-width: 0; }
+.export-preview-header { margin-bottom: 0.4rem; }
+.export-preview-grid { grid-template-columns: repeat(var(--preview-columns), 1fr); gap: 0.5rem; }
+.export-preview-grid .thumb-cell { position: relative; font-size: 0.72rem; }
+.export-preview-grid .thumb-caption { font-size: 0.72rem; }
+
+
+/* 2 columns, as many rows as needed (a 6-event list reads as a 3x2 table --
+   3 rows of 2) -- was a single 6x1 column of wide rows; the image is what
+   should read first in a table cell this small, so each cell stacks its
+   thumbnail (full cell width -- see .trake-event-row .thumb-wrap below)
+   above its one-line E#/frame# caption instead of sitting beside it. */
+.trake-event-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+.trake-event-row {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.4rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+.trake-event-row[draggable="true"] { cursor: grab; }
+/* Same corner-badge treatment as .export-answer-card's remove button --
+   TRAKE events are editable (add/remove/reorder) now, not just a fixed
+   list from a real TRAKE search. */
+.trake-event-row .export-remove-btn {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    z-index: 200;
+    width: 20px;
+    height: 20px;
+    font-size: 0.7rem;
+}
+.trake-event-row .thumb-wrap, .trake-event-row .thumb-missing { width: 100%; flex: none; }
+/* E#/frame# captions -- half the size of .thumb-caption's usual (inherited,
+   1rem) size, now that the thumbnail above carries the cell's size instead. */
+.trake-event-fields { flex: none; text-align: center; }
+.trake-event-fields .thumb-caption { font-size: 0.75rem; margin-top: 0.1rem; }
+
+/* TRAKE curate/cache/merge panel (export/trake.js's ensureTrakeSkeleton) --
+   .playback-timer (base.css) is shared with the modal playback dialogs, but
+   .playback-layout/.playback-main/.playback-info aren't (this panel uses
+   its own .trake-toprow/.trake-main-row/.trake-video-col layout instead,
+   see below); .dialog-box video's sizing doesn't apply outside a dialog
+   either, so the curation video gets its own equivalent rule here. */
+.export-dialog video {
+    display: block;
+    max-width: 100%;
+    width: auto;
+    height: auto;
+    margin: 0 auto;
+    border-radius: 4px;
+}
+/* Load/switch video + the live video/frame/time readout + "Add current
+   frame" all share one compact row -- the Video ID box and its button are
+   deliberately small (a one-time-per-video action), unlike the wide,
+   prominent Add-frame button (the repeated per-event action). */
+.trake-toprow {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+}
+/* Shared by TRAKE's own curation panel and KIS/VQA's native
+   (Keyframes-unchecked) one -- same Video ID/Load-switch row, different
+   ids (#trake-load-video/#native-load-video etc.) so both panels' DOM can
+   coexist (only one visible at a time, see export/ui.js's
+   renderTypeVisibility). */
+.trake-toprow .curate-load-video { flex: 0 0 170px; padding: 0.3rem 0.5rem; font-size: 0.85rem; }
+.trake-toprow .curate-load-btn { padding: 0.3rem 0.6rem; font-size: 0.8rem; }
+.trake-toprow .playback-timer { margin: 0; }
+.trake-toprow .playback-speed { margin: 0; }
+
+/* Video preview (left, 65%) and the event list (right, 35%) share one
+   row -- .export-dialog video's max-width:100% keeps the video within its
+   65% column regardless of the source video's native aspect ratio. */
+.trake-main-row { display: flex; gap: 1.25rem; align-items: flex-start; }
+/* flex-shrink:1 (not 0) so the row's gap doesn't push the 65/35 split past
+   100% of the container -- both columns give up the same few px, keeping
+   the ratio effectively intact. */
+.trake-video-col { flex: 0 1 65%; min-width: 0; }
+.trake-events-col { flex: 0 1 35%; min-width: 0; }
+
+.trake-cache-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.4rem 0.5rem;
+    margin-bottom: 0.4rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: grab;
+}
+.trake-cache-row .thumb-caption { flex: 1; margin: 0; }
+
+.export-actions { display: flex; gap: 0.5rem; }
+
+/* Video ID/Frame ID/Change -- share the topbar's remaining space. Hidden
+   (display:none, set in export/ui.js) for KIS/VQA native mode (Keyframes
+   unchecked) -- there's no keyframe n to retarget with Video ID/Frame ID,
+   the curation panel's own video is the only way to add a frame there --
+   except for VQA, which reuses this same slot for the answer text box
+   instead (#exp-answer-text, normally inside .export-answer-area, gets
+   moved in here -- see renderTypeVisibility). TRAKE repurposes the row
+   rather than hiding it (Frame ID becomes "add a raw event"). Query#
+   (also in .export-topbar, see above) stays visible for every type. */
+.export-change-fields { display: flex; gap: 0.5rem; flex: 1 1 260px; min-width: 0; }
+.export-change-fields input { flex: 1; min-width: 0; }

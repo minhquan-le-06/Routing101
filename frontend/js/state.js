@@ -1,20 +1,17 @@
-// frontend/js/state.js -- client-side state, the direct equivalent of
-// Streamlit's per-session `session_state` (see the rewrite plan's
-// Decisions section 4) -- plain in-memory JS, scoped to the page session,
-// reset on reload. Grows one field per phase as each signal is wired up.
+// frontend/js/state.js -- client-side state: plain in-memory JS, scoped to
+// the page session, reset on reload (except mixedConfig, persisted below).
 
 export const state = {
     signal: "Keyframe",
     imageQueryId: null,       // set by query-input.js's paste handler
-    // Per-{video_id}_{center_n} neighbor-popup expand counters, mirrors
-    // ui/app.py's session_state[f"nbr_extra_{video_id}_{center_n}"].
+    // Per-{video_id}_{center_n} neighbor-popup expand counters.
     neighborExtra: new Map(), // key `${videoId}_${centerN}` -> {before, after}
 };
 
 // ---------------------------------------------------------------------------
 // Export (AIC submission CSV) -- tracks the current signal's last result
-// set, which the standalone Export CSV tab (export-ui.js, opened by
-// export-dialog.js) reads as its "similars" preview tier whenever a result
+// set, which the standalone Export CSV tab (export/ui.js, opened by
+// export/dialog.js) reads as its "similars" preview tier whenever a result
 // card's ★ button opens it. Reset on every new search -- a fresh result
 // set invalidates the old one.
 // ---------------------------------------------------------------------------
@@ -29,25 +26,22 @@ export function resetExportCandidates(candidates) {
 
 // Exposed on `window` (not just this module's export binding) so the
 // standalone Export CSV tab (frontend/export.html, opened via window.open
-// from export-dialog.js) can reach it as `window.opener.__routing101` --
+// from export/dialog.js) can reach it as `window.opener.__routing101` --
 // same-origin windows can read/write each other's plain JS objects
 // directly, no postMessage/serialization needed, as long as this tab stays
 // open. `exportState` is handed over by reference, so the export tab's
 // "Similars" preview reflects this tab's most recent search live, not a
 // frozen snapshot from whenever the export tab was opened. `handoffs`
 // carries the one-shot trigger object across for each ★ click (see
-// export-dialog.js/export-page.js).
+// export/dialog.js / export/page.js).
 window.__routing101 = window.__routing101 || {};
 window.__routing101.exportState = exportState;
 window.__routing101.handoffs = window.__routing101.handoffs || new Map();
 
 // ---------------------------------------------------------------------------
-// Mixed mode config -- ui/app.py:1252-1267. ONE shared config, read/written
-// from standalone Mixed mode AND every TRAKE row set to "Mixed" (a later
-// phase) -- same single-global-dict coupling as the original, see the
-// rewrite plan's Decisions section 2. Persisted to localStorage: a small
-// superset of ui/app.py's per-session behavior (survives reloads too),
-// not a limitation.
+// Mixed mode config -- ONE shared config (weights + legs), read/written by
+// every TRAKE row set to "Mixed" via the weights dialog. Persisted to
+// localStorage, so it survives reloads.
 // ---------------------------------------------------------------------------
 
 export const MIXED_SIGNAL_NAMES = ["Keyframe", "ASR", "Caption", "OCR"];
@@ -87,11 +81,10 @@ export function saveMixedConfig() {
 }
 
 // ---------------------------------------------------------------------------
-// TRAKE state -- ui/app.py:1810-1812 (trake_context/trake_events/trake_next_id).
+// TRAKE state (context row, event rows, next row id).
 // Signal choices offered per event row: every signal except TRAKE itself
 // (nested TRAKE makes no sense) and Hierarchy (a grouped/drilled-down
-// result set, not the single ranked frame list TRAKE expects per event) --
-// ui/app.py:1615.
+// result set, not the single ranked frame list TRAKE expects per event).
 // ---------------------------------------------------------------------------
 
 // Summary is video-level (one paragraph per video, always resolves to
@@ -124,8 +117,7 @@ export const mixedQueryState = {
     nextId: 1,
 };
 
-// Hierarchy: per-video Top-G override, mirrors ui/app.py's
-// session_state.hier_extra_g (ui/app.py:2136-2137) -- the "Expand" button
+// Hierarchy: per-video Top-G override -- the "Expand" button
 // bumps just that one video's effective G by one tile-size row (settings.js's
 // TILE_SIZES.hierExpand), independent of every other group and of the
 // sidebar's Top-G control.
@@ -177,9 +169,8 @@ function copyTextToClipboard(text) {
     }
 }
 
-// Mirrors ui/app.py's copy_to_scope/copy_collection_only (ui/app.py:233-242):
-// fills the scope boxes from one frame's video_id, but -- same as the
-// original -- does NOT auto-check "Use video"/"Use collection" for you.
+// Fills the scope boxes from one frame's video_id, but does NOT
+// auto-check "Use video"/"Use collection" for you.
 export function copyToScope(videoId) {
     document.getElementById("video-filter").value = videoId;
     const m = /^L(\d+)/i.exec(videoId);

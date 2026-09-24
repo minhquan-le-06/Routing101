@@ -133,10 +133,10 @@ export function setQueryChunkCache(strategy) {
 // How the settings dialog should present the one shared group-by toggle for
 // the signal that's currently mounted -- Hierarchy/TRAKE don't offer it at
 // all, and Summary relabels it (it groups by collection, not video: one
-// toggle relabelled, never a second checkbox, same as ui/app.py). Signals set
+// toggle relabelled, never a second checkbox). Signals set
 // this from mount()/unmount() instead of reaching into the sidebar DOM, which
 // is where these two rules lived before the checkbox moved into Settings.
-export const GROUP_BY_DEFAULT_LABEL = "Group by video";
+const GROUP_BY_DEFAULT_LABEL = "Group by video";
 export const groupByUi = { visible: true, label: GROUP_BY_DEFAULT_LABEL };
 
 export function setGroupByUi({ visible = true, label = GROUP_BY_DEFAULT_LABEL } = {}) {
@@ -146,8 +146,8 @@ export function setGroupByUi({ visible = true, label = GROUP_BY_DEFAULT_LABEL } 
 
 // Everything layout-ish is driven through CSS custom properties on :root, so
 // a size/zoom change takes effect on already-rendered grids without a
-// re-render -- style.css consumes --hover-zoom/--grid-columns/--preview-columns.
-export function applySettings() {
+// re-render -- base.css/export.css consume --hover-zoom/--grid-columns/--preview-columns.
+function applySettings() {
     const root = document.documentElement;
     root.style.setProperty("--hover-zoom", String(settings.hoverZoom));
     root.style.setProperty("--grid-columns", String(tile().columns));

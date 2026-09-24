@@ -1,5 +1,5 @@
 // frontend/js/signals/ocr.js -- OCR signal panel: single leg by design, no
-// embedding leg, no RRF, no leg checkboxes (ui/app.py:1962-1963, 2052-2061).
+// embedding leg, no RRF, no leg checkboxes.
 
 import { searchOcr } from "../api.js";
 import { renderGrid } from "../render.js";

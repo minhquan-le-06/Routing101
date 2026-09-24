@@ -1,6 +1,6 @@
 // frontend/js/video-controls.js -- shared <video> element behavior used by
 // every playback surface (openPlaybackDialog/openTrakePlaybackDialog in
-// dialogs.js, and the TRAKE curation panel in export-ui.js): remembers the
+// dialogs/playback.js, and the TRAKE curation panel in export/curation.js): remembers the
 // viewer's last-used volume/playback speed across sessions (localStorage,
 // same persisted-config pattern as state.js's mixedConfig) and adds
 // keyboard shortcuts for changing speed, since the native <video controls>
@@ -29,7 +29,7 @@ function loadPrefs() {
     return { volume: DEFAULT_VOLUME, rate: 1 };
 }
 
-export const videoPrefs = loadPrefs();
+const videoPrefs = loadPrefs();
 
 function savePrefs() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(videoPrefs));

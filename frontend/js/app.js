@@ -1,14 +1,12 @@
 // frontend/js/app.js -- wires the signal switcher, initial load, and
-// query-submit trigger. Ports ui/app.py's segmented_control mode switch
-// (ui/app.py:1611-1629) and the top-level `if mode == "...":` render
-// dispatch. Only Keyframe is wired in Phase 1 -- later phases register
-// more entries in SIGNALS and enable their sidebar buttons.
+// query-submit trigger: SIGNALS maps each sidebar signal button to its
+// signals/*.js module, and the active one handles search + render.
 
 import { getProfile, getSearchSettings } from "./api.js";
 import { resetExportCandidates, state } from "./state.js";
 import { setOnSubmit } from "./query-input.js";
 import { initFacets } from "./facets.js";
-import { openSettingsDialog } from "./dialogs.js";
+import { openSettingsDialog } from "./dialogs/settings.js";
 import { setQueryChunkCache, tile } from "./settings.js";
 import * as keyframe from "./signals/keyframe.js";
 import * as asr from "./signals/asr.js";
@@ -44,7 +42,7 @@ function runCurrentSearch() {
 }
 
 function selectSignal(name) {
-    if (!SIGNALS[name]) return; // not wired up yet (later phase)
+    if (!SIGNALS[name]) return; // unknown signal name
     const prevMod = currentModule();
     if (prevMod?.unmount) prevMod.unmount();
     state.signal = name;
@@ -74,9 +72,8 @@ document.getElementById("settings-btn").addEventListener("click", () => {
     openSettingsDialog(runCurrentSearch);
 });
 
-// Re-run search on any sidebar control change (mirrors Streamlit's
-// rerun-on-any-widget-interaction model, but only for the controls that
-// actually affect a search -- clicking "Show more"/"Copy" doesn't touch
+// Re-run search on any sidebar control change -- but only for the controls
+// that actually affect a search -- clicking "Show more"/"Copy" doesn't touch
 // these listeners at all, so there's no wasted-recompute problem to guard
 // against here in the first place).
 // ("Group by video"/"Show full text" aren't here any more -- they're saved

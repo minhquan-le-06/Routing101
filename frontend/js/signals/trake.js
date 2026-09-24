@@ -1,11 +1,11 @@
-// frontend/js/signals/trake.js -- TRAKE signal panel. Ports ui/app.py's
-// TRAKE sidebar (context row E0 + dynamic event rows E1..En with add/
-// remove, ui/app.py:1801-1893) and result cards (ui/app.py:2181-2262).
+// frontend/js/signals/trake.js -- TRAKE signal panel: the sidebar (context
+// row E0 + dynamic event rows E1..En with add/remove) and result cards.
 
 import { searchTrake } from "../api.js";
-import { openTrakePlaybackDialog, openWeightsDialog } from "../dialogs.js";
-import { openExportDialog } from "../export-dialog.js";
-import { signalSelectHtml } from "../signal-select.js";
+import { openTrakePlaybackDialog } from "../dialogs/playback.js";
+import { openWeightsDialog } from "../dialogs/weights.js";
+import { openExportDialog } from "../export/dialog.js";
+import { signalSelectHtml } from "../util.js";
 import { copyToScope, mixedConfig, resetExportCandidates, scopeFilters, trakeState, TRAKE_EVENT_SIGNALS } from "../state.js";
 import { setGroupByUi } from "../settings.js";
 
@@ -16,10 +16,7 @@ const topVWrap = document.getElementById("top-v-wrap");
 let runRef = () => {};
 
 function bindEnterSubmit(textarea) {
-    // Trivial now -- ui/app.py's version needed a MutationObserver +
-    // singleton guard purely to survive Streamlit re-emitting the same
-    // <script> on every rerun (ui/app.py:1865-1893); a hand-written page
-    // just attaches the listener once, when the row is created.
+    // Attached once, when the row is created.
     textarea.addEventListener("keydown", (e) => {
         if (e.key === "Enter" && !e.isComposing) {
             e.preventDefault();
@@ -138,7 +135,7 @@ function renderCandidate(container, c) {
     container.append(grid);
 
     // Single play-icon action per video: acts as both playback and "copy
-    // scope" (ui/app.py:2250-2261) -- per-event thumbnails above are
+    // scope" -- per-event thumbnails above are
     // display-only, no own actions.
     const playBtn = document.createElement("button");
     playBtn.className = "icon-btn";

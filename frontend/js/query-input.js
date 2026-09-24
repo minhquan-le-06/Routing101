@@ -1,10 +1,5 @@
 // frontend/js/query-input.js -- query textarea (Enter-to-submit) + paste-to-
-// image handling. Ports the *behavior* of ui/app.py's two JS injections
-// (ui/app.py:1664-1778) but trivially: a hand-written page has no
-// "rerun the whole script" model to defend against, so this is just plain
-// addEventListener calls at module load -- no MutationObserver, no
-// singleton-guard dance (that machinery in ui/app.py existed purely to
-// survive Streamlit re-emitting the same <script> block on every rerun).
+// image handling, as plain addEventListener calls at module load.
 
 import { uploadQueryImage } from "./api.js";
 import { state } from "./state.js";
@@ -18,7 +13,7 @@ const clearBtn = document.getElementById("clear-image-query");
 // fight: the box auto-grows to fit whatever is typed (uncapped -- a long
 // query pushes the rest of the sidebar down and the sidebar scrolls), and
 // #query-resize, the full-width bar under it standing in for the native
-// corner grip (see css/style.css), sets a floor the box will not shrink
+// corner grip (see css/app.css), sets a floor the box will not shrink
 // below. So a drag makes the box taller than its text and keeps it there;
 // typing past that floor keeps growing from it; deleting text shrinks back
 // down to the floor, never past it.

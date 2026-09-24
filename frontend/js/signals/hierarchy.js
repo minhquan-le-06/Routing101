@@ -1,6 +1,6 @@
 // frontend/js/signals/hierarchy.js -- Hierarchy Search: bespoke rendering
-// (not renderGrid), same as ui/app.py:2112-2179 -- a video-grouped,
-// drilled-down result set isn't a plain ranked list.
+// (not renderGrid) -- a video-grouped, drilled-down result set isn't a
+// plain ranked list.
 
 import { searchHierarchy, expandHierarchy } from "../api.js";
 import { renderThumb, renderActions } from "../render.js";
@@ -12,9 +12,8 @@ const topGWrap = document.getElementById("top-g-wrap");
 
 // video_id -> {best, step1_frames, seed_n} -- cached so the seed-picker and
 // "Expand" button can re-drill without re-running Step 1's base search,
-// same as ui/app.py re-reading `groups[vid]` fresh each rerun rather than
-// keeping a previously-drilled list (see backend/routes/hierarchy.py's
-// module docstring).
+// always from the original Step-1 list rather than a previously-drilled
+// one (see backend/routes/hierarchy.py's module docstring).
 let groupsCache = new Map();
 
 export function mount(controlsEl) {

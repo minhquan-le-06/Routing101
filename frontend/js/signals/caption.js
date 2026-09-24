@@ -1,4 +1,4 @@
-// frontend/js/signals/caption.js -- Caption signal panel. ui/app.py:1959-1961 (controls), 2026-2050 (render).
+// frontend/js/signals/caption.js -- Caption signal panel (the factory's default legs).
 
 import { searchCaption } from "../api.js";
 import { makeTextSignalPanel } from "./_text_signal.js";

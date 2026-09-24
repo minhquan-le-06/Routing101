@@ -1,5 +1,5 @@
 // frontend/js/signals/_text_signal.js -- ASR/Caption/Summary share one
-// shape (SigLIP2 leg + fuzzy leg + RRF, ui/app.py:2000-2050, 2063-2087),
+// shape (SigLIP2 leg + fuzzy leg + RRF),
 // differing only in labels, the API call, (Summary) group-by-collection
 // instead of group-by-video, (per-instance) checkbox order/defaults, and
 // which legs exist at all -- ASR adds a fourth, Exact.

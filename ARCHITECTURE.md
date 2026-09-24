@@ -34,10 +34,14 @@ backend/
 frontend/
   index.html           main app shell
   export.html           standalone Export CSV page (opened in its own tab, see Export below)
-  js/                 app.js (signal switcher) + api.js, state.js, render.js, dialogs.js
-  js/export-dialog.js, export-page.js, export-ui.js   Export CSV tab: opener handoff, entry point, UI
-  js/signals/          one module per signal, same render/search shape
-  css/style.css
+  js/                 app.js (signal switcher) + api.js, state.js, settings.js, render.js,
+                      query-input.js, facets.js, video-controls.js, util.js
+  js/signals/          one module per signal, same render/search shape (_text_signal.js: ASR/Caption/Summary)
+  js/dialogs/          base.js (openDialog) + neighbors, playback (single-frame + TRAKE), weights, settings
+  js/export/           Export CSV tab: dialog.js (opener handoff), page.js (entry point), ui.js (shell),
+                      answers.js (KIS/VQA), curation.js (shared video panel), trake.js (cache/merge),
+                      state.js (state shape + helpers)
+  css/base.css         shared by both pages; app.css (main page) and export.css (Export tab) on top
 scripts/
   _run_common.bat       shared Windows launch sequence (Docker -> ES container -> uvicorn), called by run.bat
   open_when_ready.bat   polls the app, opens the browser once it responds
@@ -206,7 +210,7 @@ Every result card's ★ button opens the Export CSV UI in its own **browser
 tab** (`frontend/export.html`), not an in-page popup — it stays in sync
 with whatever you're currently searching in the original tab, via a
 same-origin `window.opener` handoff (`state.js` exposes
-`window.__routing101` for this; `export-page.js` reads a live reference
+`window.__routing101` for this; `export/page.js` reads a live reference
 to the opener's `exportState`, not a frozen snapshot, so "Similars" always
 reflects the opener's most recent search). It generates a ranked, deduped
 CSV for one AIC query (`query-p2-<#>-<kis|qa|trake>.csv`, no header row),
@@ -299,7 +303,7 @@ duplicate of an already-placed row never helps, only wastes a slot).
 response — forces revalidation (an unchanged file still 304s off its
 ETag) rather than letting the browser reuse a stale copy under default
 heuristic freshness. Added after exactly that bit — a browser silently
-running an old `export-ui.js` against an already-updated backend, with no
+running an old `export/ui.js` against an already-updated backend, with no
 error anywhere — cost real debugging time. `/media` (keyframes/video) is
 deliberately left with default caching: those files are genuinely
 immutable per `video_id`/frame, unlike frontend source that changes

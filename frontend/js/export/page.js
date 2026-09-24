@@ -1,11 +1,11 @@
-// frontend/js/export-page.js -- entry point for the standalone Export CSV
+// frontend/js/export/page.js -- entry point for the standalone Export CSV
 // tab (frontend/export.html), opened via window.open from
-// export-dialog.js's openExportDialog(). Reads the handed-off trigger and a
+// export/dialog.js's openExportDialog(). Reads the handed-off trigger and a
 // live reference to the opener's exportState from
 // window.opener.__routing101 (see state.js), then mounts the same UI
-// export-ui.js used everywhere a ★ button leads.
+// export/ui.js used everywhere a ★ button leads.
 
-import { buildExportUI } from "./export-ui.js";
+import { buildExportUI } from "./ui.js";
 
 const root = document.getElementById("export-root");
 
@@ -42,7 +42,7 @@ if (!handoffId || !opener || opener.closed || !opener.__routing101) {
                 }
             },
             // Only ever called for "cancel" -- a successful export leaves
-            // the form in place (see export-ui.js's #exp-export handler)
+            // the form in place (see export/ui.js's #exp-export handler)
             // rather than tearing this page down, so the user can
             // immediately re-export without reopening the tab.
             onDone: () => {

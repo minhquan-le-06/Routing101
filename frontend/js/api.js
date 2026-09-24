@@ -119,7 +119,7 @@ async function postForCsvDownload(url, body) {
 export const exportCsv = (body) => postForCsvDownload("/api/export", body);
 
 // TRAKE row generation: one video's curated ordered frame_idx list ->
-// <=max_rows candidate sequences, cached client-side (export-ui.js) keyed
+// <=max_rows candidate sequences, cached client-side (export/ui.js) keyed
 // by video_id. Pure computation, no download -- see backend/export.py's
 // generate_trake_rows().
 export function getTrakeRows(videoId, frameIdxs, maxRows) {

@@ -1,0 +1,308 @@
+/* frontend/css/app.css -- the main search page only (index.html), on top
+   of base.css: layout, sidebar, results header, dialogs. */
+
+.layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Sidebar */
+/* ---------------------------------------------------------------------- */
+
+.sidebar {
+    width: 320px;
+    flex: none;
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border);
+    padding: 1.25rem 1rem;
+    overflow-y: auto;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+}
+
+.sidebar h2 {
+    margin: 0 0 0.75rem;
+    font-size: 1.1rem;
+}
+
+.signal-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.6rem;
+}
+
+.signal-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 36px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: #fff;
+    cursor: pointer;
+    font-size: 1.1rem;
+}
+
+.signal-btn:hover { background: var(--accent-soft); }
+.signal-btn.active { border-color: var(--accent); background: var(--accent-soft); }
+.signal-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.sidebar label {
+    display: block;
+    font-size: 0.85rem;
+    margin: 0.75rem 0 0.25rem;
+    color: var(--text-muted);
+}
+
+.sidebar textarea,
+.sidebar input[type="text"],
+.sidebar input[type="number"] {
+    width: 100%;
+    font-family: inherit;
+    font-size: 0.9rem;
+    padding: 0.4rem 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: #fff;
+    color: var(--text);
+    resize: vertical;
+}
+
+.sidebar textarea { min-height: 64px; }
+
+/* Query box resize: the native grip is a fixed ~16px corner square that no
+   CSS can widen, so #query-text drops it and #query-resize below is the
+   handle instead -- a full-width bar flush against the textarea's bottom
+   edge, dragged by query-input.js. */
+#query-text {
+    resize: none;
+    display: block;   /* kills the inline baseline gap under the box, so the bar sits flush */
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+#query-resize {
+    height: 10px;
+    margin-top: -1px;
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 var(--radius) var(--radius);
+    background: var(--bg-sidebar);
+    cursor: ns-resize;
+    touch-action: none;   /* drags on touch move the box, not the sidebar */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* The grip line itself, drawn rather than shipped as an asset. */
+#query-resize::after {
+    content: "";
+    width: 22px;
+    height: 2px;
+    border-radius: 1px;
+    background: var(--text-muted);
+    opacity: 0.45;
+}
+
+#query-resize:hover::after, #query-resize.dragging::after { opacity: 0.8; }
+#query-resize.dragging { background: var(--accent-soft); }
+
+.scope-row { display: flex; gap: 0.5rem; }
+.scope-row > div { flex: 1; }
+
+#scope-segmented { margin-top: 0.5rem; }
+#scope-segmented button { flex: 1; }
+
+.image-query-preview {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+}
+.image-query-preview img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Main content */
+/* ---------------------------------------------------------------------- */
+
+.main {
+    flex: 1;
+    padding: 1.5rem 2rem;
+    min-width: 0;
+}
+
+.main h1 { margin-top: 0; }
+
+/* Active embedding-profile pill (frontend/js/app.js fills it from
+   /api/profile). Deliberately different colours per profile -- the whole
+   point is telling two otherwise-identical tabs apart at a glance. */
+.profile-badge {
+    display: inline-block;
+    margin-left: 0.6rem;
+    padding: 0.1em 0.5em;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    vertical-align: middle;
+    color: var(--text-muted);
+}
+.profile-badge:empty { display: none; }
+.profile-badge[data-profile="768"] { border-color: #9ca3af; background: #f3f4f6; color: #4b5563; }
+.profile-badge[data-profile="1152"] { border-color: #6366f1; background: #eef2ff; color: #4338ca; }
+.profile-badge[data-profile="1536"] { border-color: #10b981; background: #ecfdf5; color: #047857; }
+.main h2 { margin: 1.5rem 0 0.75rem; }
+
+.thumb-text { color: var(--text-muted); margin-top: 0.15rem; }
+
+.thumb-actions {
+    display: flex;
+    gap: 0.3rem;
+    margin-top: 0.3rem;
+}
+
+.group-header {
+    font-size: 0.9rem;
+    margin: 0.75rem 0 0.4rem;
+}
+
+/* Nearby-frames dialog: its per-thumbnail export badge (.export-add-btn,
+   base.css) is positioned against the cell. */
+.nbr-grid .thumb-cell { position: relative; }
+
+/* ---------------------------------------------------------------------- */
+/* Dialogs */
+/* ---------------------------------------------------------------------- */
+
+.dialog-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 4rem 1rem;
+    z-index: 1000;
+}
+
+.dialog-box {
+    position: relative;
+    background: #fff;
+    border-radius: 8px;
+    padding: 0.65rem 1rem;
+    width: 100%;
+    max-width: 1100px;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+.dialog-box.wide { max-width: 1100px; }
+
+.dialog-box h3 { margin: 0 2rem 0.5rem 0; } /* right margin clears the close button, which no longer floats */
+
+/* Positioned (not floated) so it works the same whether or not a dialog
+   has a title -- the playback dialogs below have none. */
+.dialog-close {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.75rem;
+    border: none;
+    background: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: var(--text-muted);
+}
+
+/* Title-less playback dialogs (openPlaybackDialog/openTrakePlaybackDialog):
+   video on one side, video_id/frame/timer info beside it instead of above
+   and below -- keeps the dialog shorter so it fits without scrolling. */
+.playback-layout {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    margin-top: 1.5rem; /* clears the absolutely-positioned close button, since there's no title to do that for us */
+}
+.playback-main { flex: 1 1 auto; min-width: 0; }
+.playback-info { flex: 0 0 220px; }
+.playback-info .thumb-caption { margin-bottom: 0.5rem; }
+
+.dialog-box video {
+    display: block;
+    max-width: 100%;
+    max-height:75vh; /* bounds the video by height too, not just width -- otherwise a wide dialog scales it tall enough to push the timer/marker-bar/gaps info below the fold */
+    width: auto;
+    height: auto;
+    margin: 0 auto;
+    border-radius: 4px;
+}
+
+#trake-marker-bar, #playback-marker-bar {
+    position: relative;
+    height: 18px;
+    margin: 4px 0 8px;
+    background: rgba(127, 127, 127, 0.15);
+    border-radius: 4px;
+}
+.trake-marker-tick {
+    position: absolute; top: 0; bottom: 0;
+    transform: translateX(-50%);
+    cursor: pointer;
+    background: #e64980;
+    color: white;
+    font-size: 10px;
+    padding: 0 4px;
+    border-radius: 3px;
+    line-height: 18px;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Settings dialog (⚙ in the sidebar's signal rows -- see dialogs/settings.js's*/
+/* openSettingsDialog). Row = label column + the control itself, so the    */
+/* zoom slider and the size segmented control line up under each other.    */
+/* ---------------------------------------------------------------------- */
+
+.settings-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 0.75rem 0;
+}
+.settings-row > label {
+    flex: 0 0 150px;
+    margin: 0;
+    font-size: 0.9rem;
+}
+.settings-row input[type="range"] { flex: 1 1 auto; }
+.settings-value { flex: 0 0 42px; font-family: monospace; font-size: 0.9rem; text-align: right; }
+.settings-row .segmented { flex: 0 0 auto; }
+
+/* Top-K/Top-V/Top-G mirrors of the sidebar boxes -- however many the current
+   signal offers (Top-V/Top-G are per-signal), side by side. */
+.settings-tops { display: flex; gap: 0.75rem; }
+.settings-top-box { display: flex; align-items: center; gap: 0.4rem; }
+.settings-top-box > label { flex: none; margin: 0; font-size: 0.85rem; color: var(--text-muted); }
+.settings-top-box input[type="number"] {
+    width: 80px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    padding: 0.3rem 0.4rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+.settings-checks { display: flex; gap: 1.25rem; flex-wrap: wrap; }
+.settings-check { display: flex; align-items: center; gap: 0.4rem; margin: 0; font-size: 0.9rem; cursor: pointer; }
+.settings-check input { margin: 0; }
+.settings-actions { display: flex; gap: 0.5rem; }
+.settings-actions .btn-primary { margin-left: auto; }

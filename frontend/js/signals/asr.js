@@ -1,8 +1,7 @@
-// frontend/js/signals/asr.js -- ASR signal panel. ui/app.py:1955-1957 (controls), 2000-2024 (render).
-// Defaults/order deviate from ui/app.py here per explicit request: the two
-// text legs (Fuzzy, Exact) come first and are on by default, SigLIP2/RRF
-// off (the original defaulted all three on and had no Exact leg at all).
-// Exact is ASR-only -- Caption/Summary use the factory's default three.
+// frontend/js/signals/asr.js -- ASR signal panel. Defaults/order differ
+// from the other text signals on purpose: the two text legs (Fuzzy, Exact)
+// come first and are on by default, SigLIP2/RRF off. Exact is ASR-only --
+// Caption/Summary use the factory's default three.
 
 import { searchAsr } from "../api.js";
 import { makeTextSignalPanel } from "./_text_signal.js";
