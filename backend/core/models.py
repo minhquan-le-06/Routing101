@@ -5,6 +5,7 @@ lifespan hook rather than lazily on first call.
 """
 
 import re
+import threading
 
 import numpy as np
 import torch
@@ -15,6 +16,13 @@ from .. import config
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 _siglip2 = None  # (model, processor), set by load_siglip2()
+
+# The fast (Rust) tokenizer is not thread-safe: every call re-sets its
+# truncation/padding state, so two requests tokenizing at once (FastAPI runs
+# sync endpoints on a thread pool) fail with "RuntimeError: Already borrowed".
+# Every text tokenization below holds this lock -- tokenization only, never
+# the model forward pass, so concurrent searches still embed in parallel.
+_TOKENIZER_LOCK = threading.Lock()
 
 
 def load_siglip2():
@@ -37,8 +45,11 @@ def encode_text_siglip2(texts: list) -> np.ndarray:
     # SigLIP2 checkpoint's tokenizer_config.json reports the 1e19 "no limit"
     # sentinel for model_max_length, so the real 64 comes from an undocumented
     # default inside Siglip2Processor. _get_siglip2_max_tokens() measures it.
-    inputs = processor(text=texts, padding="max_length", truncation=True,
-                       max_length=_get_siglip2_max_tokens(), return_tensors="pt").to(DEVICE)
+    max_length = _get_siglip2_max_tokens()  # outside the lock: it takes the lock itself
+    with _TOKENIZER_LOCK:
+        inputs = processor(text=texts, padding="max_length", truncation=True,
+                           max_length=max_length, return_tensors="pt")
+    inputs = inputs.to(DEVICE)
     with torch.no_grad():
         out = model.get_text_features(**inputs)
     feats = out.pooler_output if hasattr(out, "pooler_output") else out
@@ -106,7 +117,8 @@ def _get_siglip2_max_tokens() -> int:
     global _siglip2_max_tokens
     if _siglip2_max_tokens is None:
         _, processor = load_siglip2()
-        probe = processor(text=["word " * 500], padding="max_length", truncation=True, return_tensors="pt")
+        with _TOKENIZER_LOCK:
+            probe = processor(text=["word " * 500], padding="max_length", truncation=True, return_tensors="pt")
         _siglip2_max_tokens = probe["input_ids"].shape[-1]
     return _siglip2_max_tokens
 
@@ -122,7 +134,8 @@ def _token_len(text: str, tokenizer) -> int:
     window a text really is. (The tokenizer prints a one-time "sequence
     longer than model_max_length" warning here; harmless -- nothing measured
     by this function is fed to the model.)"""
-    return len(tokenizer(text, add_special_tokens=True, truncation=False)["input_ids"])
+    with _TOKENIZER_LOCK:
+        return len(tokenizer(text, add_special_tokens=True, truncation=False)["input_ids"])
 
 
 def _split_long_unit(unit: str, tokenizer, max_len: int) -> list:
