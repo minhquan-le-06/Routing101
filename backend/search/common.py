@@ -6,6 +6,7 @@ frontend.
 """
 
 import hashlib
+import threading
 from pathlib import Path
 
 import faiss
@@ -17,6 +18,14 @@ from .. import config
 from ..core.es import get_es_client
 from ..core.keyframes import thumbnail_url
 from ..core.models import is_image_query
+
+# Every FAISS search that overlaps another one gets its own OpenMP team of
+# CPU_BUDGET workers, and each worker keeps its BLAS scratch buffers (~125 MB)
+# for the life of the process -- so N simultaneous searches permanently cost
+# N x ~2.5 GB, which is what ran the machine out of memory under concurrent
+# load. One search at a time reuses the single team; a flat search is a few
+# milliseconds, so the wait is negligible next to the rest of a request.
+_FAISS_LOCK = threading.Lock()
 
 
 def query_hash(query) -> str:
@@ -74,7 +83,8 @@ def faiss_search_pooled(index, qmat: np.ndarray, k: int, per_vec_k: int = None):
     """
     qmat = l2_normalize(np.asarray(qmat, dtype="float32").reshape(-1, index.d))
     n = min(per_vec_k or k, index.ntotal)
-    scores, ids = index.search(qmat, n)
+    with _FAISS_LOCK:
+        scores, ids = index.search(qmat, n)
     if qmat.shape[0] == 1:
         return ids[0], scores[0]
     fused, best = {}, {}
