@@ -6,7 +6,7 @@ and applies the matched classes as an AND post-filter over an
 already-ranked result DataFrame, keeping only rows whose keyframe's OD
 detections (filtered_objects/{video_id}.csv) include every matched class.
 
-Call sites (backend/routes/search.py) always run this AFTER a signal's own
+Call sites (backend/routes/search/signals.py) always run this AFTER a signal's own
 ranking is final -- after RRF fusion for an RRF leg, after the raw score
 ranking for a plain leg -- and always right before the top_k head()
 truncation, so the filter sees the full fetch_k-sized candidate pool

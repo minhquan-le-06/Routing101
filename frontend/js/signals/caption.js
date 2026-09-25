@@ -1,8 +1,8 @@
 // frontend/js/signals/caption.js -- Caption signal panel (the factory's default legs).
 
-import { searchCaption } from "../api.js";
+import { searchCaption } from "../core/api.js";
 import { makeTextSignalPanel } from "./_text_signal.js";
-import { settings } from "../settings.js";
+import { settings } from "../core/settings.js";
 
 const groupMode = () => settings.groupByVideo ? "video" : null;
 

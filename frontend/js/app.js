@@ -2,12 +2,12 @@
 // query-submit trigger: SIGNALS maps each sidebar signal button to its
 // signals/*.js module, and the active one handles search + render.
 
-import { getProfile, getSearchSettings } from "./api.js";
-import { resetExportCandidates, state } from "./state.js";
-import { setOnSubmit } from "./query-input.js";
-import { initFacets } from "./facets.js";
+import { getProfile, getSearchSettings } from "./core/api.js";
+import { resetExportCandidates, state } from "./core/state.js";
+import { setOnSubmit } from "./ui/query-input.js";
+import { initFacets } from "./ui/facets.js";
 import { openSettingsDialog } from "./dialogs/settings.js";
-import { setQueryChunkCache, tile } from "./settings.js";
+import { setQueryChunkCache, tile } from "./core/settings.js";
 import * as keyframe from "./signals/keyframe.js";
 import * as asr from "./signals/asr.js";
 import * as caption from "./signals/caption.js";

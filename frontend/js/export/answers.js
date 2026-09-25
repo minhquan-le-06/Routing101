@@ -5,8 +5,8 @@
 //   Keyframes unchecked ("native") -- the shared curation panel
 //     (curation.js) over a raw video, in frame_idx space.
 
-import { getExportNeighbors, getExportSimilar } from "../api.js";
-import { captureVideoThumbnail } from "../video-controls.js";
+import { getExportNeighbors, getExportSimilar } from "../core/api.js";
+import { captureVideoThumbnail } from "../ui/video-controls.js";
 import { ensureFrameInfo, frameKey, previewPage } from "./state.js";
 
 // `ctx`: buildExportUI()'s shared context plus curation.js's functions.

@@ -2,10 +2,10 @@
 // "Show more"): the keyframes around one frame, expandable both ways, each
 // with its own export button.
 
-import { getNeighbors } from "../api.js";
+import { getNeighbors } from "../core/api.js";
 import { openExportDialog } from "../export/dialog.js";
-import { tile } from "../settings.js";
-import { getNeighborExtra } from "../state.js";
+import { tile } from "../core/settings.js";
+import { getNeighborExtra } from "../core/state.js";
 import { openDialog } from "./base.js";
 
 export async function openNeighborsDialog(videoId, centerN) {

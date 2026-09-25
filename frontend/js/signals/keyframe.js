@@ -4,11 +4,11 @@
 // choose and no RRF to fuse -- a single flat result grid, same shape as
 // OCR/Caption's own single-leg sections.
 
-import { searchKeyframe } from "../api.js";
-import { renderGrid } from "../render.js";
-import { currentQuery } from "../query-input.js";
-import { resetExportCandidates, scopeFilters } from "../state.js";
-import { settings } from "../settings.js";
+import { searchKeyframe } from "../core/api.js";
+import { renderGrid } from "../ui/render.js";
+import { currentQuery } from "../ui/query-input.js";
+import { resetExportCandidates, scopeFilters } from "../core/state.js";
+import { settings } from "../core/settings.js";
 
 export function mount(controlsEl) {
     controlsEl.innerHTML = "";

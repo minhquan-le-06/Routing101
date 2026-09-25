@@ -1,8 +1,8 @@
-// frontend/js/query-input.js -- query textarea (Enter-to-submit) + paste-to-
+// frontend/js/ui/query-input.js -- query textarea (Enter-to-submit) + paste-to-
 // image handling, as plain addEventListener calls at module load.
 
-import { uploadQueryImage } from "./api.js";
-import { state } from "./state.js";
+import { uploadQueryImage } from "../core/api.js";
+import { state } from "../core/state.js";
 
 const textarea = document.getElementById("query-text");
 const preview = document.getElementById("image-query-preview");

@@ -1,11 +1,11 @@
 // frontend/js/signals/ocr.js -- OCR signal panel: single leg by design, no
 // embedding leg, no RRF, no leg checkboxes.
 
-import { searchOcr } from "../api.js";
-import { renderGrid } from "../render.js";
-import { currentQuery } from "../query-input.js";
-import { resetExportCandidates, scopeFilters } from "../state.js";
-import { settings } from "../settings.js";
+import { searchOcr } from "../core/api.js";
+import { renderGrid } from "../ui/render.js";
+import { currentQuery } from "../ui/query-input.js";
+import { resetExportCandidates, scopeFilters } from "../core/state.js";
+import { settings } from "../core/settings.js";
 
 export function mount(controlsEl) {
     controlsEl.innerHTML = `<div class="thumb-caption muted">Single leg: fuzzy text search only, no embedding leg.</div>`;

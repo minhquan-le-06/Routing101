@@ -1,5 +1,5 @@
 """
-backend/routes/search.py -- per-signal search endpoints (Keyframe, ASR,
+backend/routes/search/signals.py -- per-signal search endpoints (Keyframe, ASR,
 Caption, OCR, Summary, Mixed). All share the same shape: fetch_k
 computation, apply_filters before RRF, the same skip messages for picture
 queries, and graceful degrade when Elasticsearch is down.
@@ -11,21 +11,21 @@ from typing import Callable, List, Literal, Optional
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from .. import config
-from ..core.models import (get_query_chunk_strategy, is_image_query, siglip2_long_query_note,
+from ... import config
+from ...core.models import (get_query_chunk_strategy, is_image_query, siglip2_long_query_note,
                            siglip2_long_query_tokens)
-from ..core.query import resolve_query
-from ..filters import metadata as md
-from ..filters import objects as od
-from ..filters.lot import apply_filters, parse_lot_range
-from ..search import asr as asr_mod
-from ..search import caption as cap_mod
-from ..search import keyframe as kf
-from ..search import ocr as ocr_mod
-from ..search import summary as sum_mod
-from ..search.common import df_to_results, rrf_fuse
-from ..search.composite import trake as trake_mod
-from .schemas import LegResult, QuerySearchRequest, SearchScope
+from ...core.query import resolve_query
+from ...filters import metadata as md
+from ...filters import objects as od
+from ...filters.lot import apply_filters, parse_lot_range
+from ...search import asr as asr_mod
+from ...search import caption as cap_mod
+from ...search import keyframe as kf
+from ...search import ocr as ocr_mod
+from ...search import summary as sum_mod
+from ...search.common import df_to_results, rrf_fuse
+from ...search.composite import trake as trake_mod
+from ..schemas import LegResult, QuerySearchRequest, SearchScope
 
 router = APIRouter()
 
@@ -221,7 +221,7 @@ def search_ocr(body: OcrSearchRequest):
 # Mixed: many independent sub-queries, each with its own text and its own
 # single signal (Keyframe/ASR/Caption/OCR -- no nested "Mixed", no Summary
 # [video-level, always resolves to frame 1 -- reserved for TRAKE's context
-# row instead, see backend/routes/trake.py], no reverse-image-search per
+# row instead, see backend/routes/search/trake.py], no reverse-image-search per
 # sub-query), combined with a user-weighted RRF (0-3 per sub-query). Each
 # sub-query is resolved via trake_search_event() -- the exact same
 # per-signal search + internal RRF every standalone signal route and TRAKE

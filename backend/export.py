@@ -7,7 +7,7 @@ per the AIC scoring model (Final Score = average of R@k for k in
 only the best-scoring row within each threshold band matters, and a
 duplicate of an already-placed row can never raise that max, only waste a
 slot). Pure logic, no FastAPI/file I/O -- mirrors the backend/search/*.py
-vs backend/routes/*.py split already used for TRAKE; backend/routes/export.py
+vs backend/routes/*.py split already used for TRAKE; backend/routes/results/export.py
 is the thin endpoint (+ two small preview-data routes) on top of this
 module.
 
@@ -28,7 +28,7 @@ necessarily the best-ranked hit of whatever query found it. Unconfirmed
 mode has no single confirmed frame to re-query from, so it still uses
 the caller-supplied candidates (the opener tab's last search results)
 as before. Either way, generate_export() below just takes whatever
-`candidates` list it's given -- routes/export.py's /api/export handler
+`candidates` list it's given -- routes/results/export.py's /api/export handler
 is what picks which one to pass, per mode.
 "Nearest keyframes by time" is keyframe-only by default (picks from the
 video's own existing extracted n's, ordered by |n - center| -- equivalent

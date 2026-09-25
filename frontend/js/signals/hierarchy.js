@@ -2,18 +2,18 @@
 // (not renderGrid) -- a video-grouped, drilled-down result set isn't a
 // plain ranked list.
 
-import { searchHierarchy, expandHierarchy } from "../api.js";
-import { renderThumb, renderActions } from "../render.js";
-import { currentQuery } from "../query-input.js";
-import { hierExtraG, resetExportCandidates, scopeFilters } from "../state.js";
-import { setGroupByUi, tile } from "../settings.js";
+import { searchHierarchy, expandHierarchy } from "../core/api.js";
+import { renderThumb, renderActions } from "../ui/render.js";
+import { currentQuery } from "../ui/query-input.js";
+import { hierExtraG, resetExportCandidates, scopeFilters } from "../core/state.js";
+import { setGroupByUi, tile } from "../core/settings.js";
 
 const topGWrap = document.getElementById("top-g-wrap");
 
 // video_id -> {best, step1_frames, seed_n} -- cached so the seed-picker and
 // "Expand" button can re-drill without re-running Step 1's base search,
 // always from the original Step-1 list rather than a previously-drilled
-// one (see backend/routes/hierarchy.py's module docstring).
+// one (see backend/routes/search/hierarchy.py's module docstring).
 let groupsCache = new Map();
 
 export function mount(controlsEl) {

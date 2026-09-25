@@ -13,7 +13,7 @@ from pathlib import Path
 FETCH_K = 100      # candidates pulled per leg, gives RRF a real pool to fuse
 DISPLAY_N = 200
 RRF_K = 60
-NEIGHBOR_WINDOW = 7  # "show more" popup: +/- this many frames by frame id when the caller names no window of its own (the frontend always does -- it sizes the popup per its tile-size setting, frontend/js/settings.js)
+NEIGHBOR_WINDOW = 7  # "show more" popup: +/- this many frames by frame id when the caller names no window of its own (the frontend always does -- it sizes the popup per its tile-size setting, frontend/js/core/settings.js)
 TOP_G_DEFAULT = 10   # Hierarchy Search: frames kept per video after drill-down (Top-G)
 
 # ---------------------------------------------------------------------------

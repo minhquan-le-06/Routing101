@@ -4,11 +4,11 @@
 // sub-query). UI structure mirrors signals/trake.js's add/remove-row list,
 // minus the context row and the temporal/ordering pieces.
 
-import { searchMixed } from "../api.js";
-import { renderGrid } from "../render.js";
-import { signalSelectHtml } from "../util.js";
-import { mixedQueryState, resetExportCandidates, scopeFilters, MIXED_QUERY_SIGNALS } from "../state.js";
-import { settings } from "../settings.js";
+import { searchMixed } from "../core/api.js";
+import { renderGrid } from "../ui/render.js";
+import { signalSelectHtml } from "../core/util.js";
+import { mixedQueryState, resetExportCandidates, scopeFilters, MIXED_QUERY_SIGNALS } from "../core/state.js";
+import { settings } from "../core/settings.js";
 
 const mixedSection = document.getElementById("mixed-query-section");
 const standardSection = document.getElementById("standard-query-section");

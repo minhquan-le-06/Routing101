@@ -1,4 +1,4 @@
-// frontend/js/util.js -- tiny shared helpers with no state/dependencies of
+// frontend/js/core/util.js -- tiny shared helpers with no state/dependencies of
 // their own.
 
 // Playback timer text ("mm:ss.ss"), shared by every video surface (the

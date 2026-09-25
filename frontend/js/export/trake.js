@@ -3,8 +3,8 @@
 // per-video client-side cache, and the client-side merge of the checked
 // cached videos into one <=99-row CSV (see ui.js's header for the flow).
 
-import { getTrakeRows } from "../api.js";
-import { captureVideoThumbnail } from "../video-controls.js";
+import { getTrakeRows } from "../core/api.js";
+import { captureVideoThumbnail } from "../ui/video-controls.js";
 
 // `ctx`: buildExportUI()'s shared context plus curation.js's functions.
 export function createTrake(ctx) {

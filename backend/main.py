@@ -17,7 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from . import config
 from .core.es import ensure_all_fuzzy_indices
 from .core.models import DEVICE, load_siglip2
-from .routes import export, facets, hierarchy, media, query_image, search, settings, trake
+from .routes import ROUTERS
 from .search import asr as asr_mod
 from .search import caption as cap_mod
 from .search import keyframe as kf
@@ -89,14 +89,8 @@ class NoCacheStaticFiles(StaticFiles):
 
 app = FastAPI(title="Routing101 by MiLF", lifespan=lifespan)
 
-app.include_router(search.router)
-app.include_router(facets.router)
-app.include_router(media.router)
-app.include_router(query_image.router)
-app.include_router(trake.router)
-app.include_router(hierarchy.router)
-app.include_router(export.router)
-app.include_router(settings.router)
+for router in ROUTERS:  # see backend/routes/__init__.py
+    app.include_router(router)
 
 # Media: served directly from the existing AICData* directories, no copying.
 app.mount("/media/keyframes", StaticFiles(directory=config.THUMBNAIL_ROOT), name="keyframes")

@@ -6,9 +6,9 @@
 // This factory avoids repeating that shape three times; OCR is the
 // one-leg exception and gets its own file.
 
-import { renderGrid } from "../render.js";
-import { currentQuery } from "../query-input.js";
-import { resetExportCandidates, scopeFilters } from "../state.js";
+import { renderGrid } from "../ui/render.js";
+import { currentQuery } from "../ui/query-input.js";
+import { resetExportCandidates, scopeFilters } from "../core/state.js";
 
 // A panel's `order` is the authoritative list of the legs it actually has --
 // it drives the checkboxes, the request, and the render, so a panel that

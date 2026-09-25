@@ -2,8 +2,8 @@
 // pure helpers every export/*.js module shares. One `s` object per
 // buildExportUI() call (see ui.js), created by freshState() below.
 
-import { getExportFrame } from "../api.js";
-import { tile } from "../settings.js";
+import { getExportFrame } from "../core/api.js";
+import { tile } from "../core/settings.js";
 
 // Initial count and "Show N more" step per preview section -- three rows of
 // whatever the tile-size setting makes .export-preview-grid wide (settings.js's

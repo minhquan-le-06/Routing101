@@ -24,18 +24,22 @@ backend/
     common.py           shared: query cache key, pooled FAISS search, rrf_fuse(), es_text_leg(),
                         result-shape contract (df_to_results)
     composite/          modes built on the base signals: mixed, trake, hierarchy
-  routes/             FastAPI endpoints
+  routes/             FastAPI endpoints; __init__.py's ROUTERS is what main.py registers
     schemas.py          shared request bases (SearchScope, QuerySearchRequest) + LegResult
-    search.py           /api/search/{keyframe,asr,caption,summary,ocr,mixed}
-    trake.py, hierarchy.py   /api/search/trake, /api/search/hierarchy(/expand)
-    export.py           /api/export/* (on top of backend/export.py)
-    media.py            /api/neighbors, /api/playback
-    facets.py, query_image.py, settings.py   /api/facets, /api/query-image, /api/profile + /api/settings
+    settings.py         /api/profile + /api/settings
+    search/             what the sidebar/search box talks to
+      signals.py          /api/search/{keyframe,asr,caption,summary,ocr,mixed}
+      trake.py, hierarchy.py   /api/search/trake, /api/search/hierarchy(/expand)
+      query_image.py, facets.py   /api/query-image, /api/facets
+    results/            what you do with a result
+      media.py            /api/neighbors, /api/playback
+      export.py           /api/export/* (on top of backend/export.py)
 frontend/
   index.html           main app shell
   export.html           standalone Export CSV page (opened in its own tab, see Export below)
-  js/                 app.js (signal switcher) + api.js, state.js, settings.js, render.js,
-                      query-input.js, facets.js, video-controls.js, util.js
+  js/app.js           entry point for index.html: signal switcher, initial load, query submit
+  js/core/             no DOM of their own, used everywhere: api.js, state.js, settings.js, util.js
+  js/ui/               shared page widgets: render.js, query-input.js, facets.js, video-controls.js
   js/signals/          one module per signal, same render/search shape (_text_signal.js: ASR/Caption/Summary)
   js/dialogs/          base.js (openDialog) + neighbors, playback (single-frame + TRAKE), weights, settings
   js/export/           Export CSV tab: dialog.js (opener handoff), page.js (entry point), ui.js (shell),

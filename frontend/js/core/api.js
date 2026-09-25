@@ -1,4 +1,4 @@
-// frontend/js/api.js -- thin fetch() wrappers, one per backend endpoint.
+// frontend/js/core/api.js -- thin fetch() wrappers, one per backend endpoint.
 
 async function jsonFetch(url, options) {
     const res = await fetch(url, options);
@@ -45,7 +45,7 @@ export function getNeighbors(videoId, centerN, before, after) {
 
 // n omitted (undefined/null) starts playback at 0:00 with no keyframe
 // lookup -- used by the TRAKE Export tab's curation panel to play a bare
-// video_id before any event exists yet (see backend/routes/media.py).
+// video_id before any event exists yet (see backend/routes/results/media.py).
 export function getPlayback(videoId, n) {
     const params = { video_id: videoId };
     if (n !== undefined && n !== null) params.n = n;

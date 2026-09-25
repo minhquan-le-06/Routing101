@@ -1,4 +1,4 @@
-// frontend/js/settings.js -- display preferences (hover-zoom strength, tile
+// frontend/js/core/settings.js -- display preferences (hover-zoom strength, tile
 // display size) shared by the main search page and the standalone Export CSV
 // tab. Persisted to localStorage, same as mixedConfig (state.js): one saved
 // value read by whichever tab is open, rather than per-tab state.

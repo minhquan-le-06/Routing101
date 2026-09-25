@@ -1,5 +1,5 @@
 """
-backend/routes/media.py -- per-frame media lookups behind the result-row
+backend/routes/results/media.py -- per-frame media lookups behind the result-row
 popups: nearby keyframes ("Show more") and single-frame video playback.
 
 /api/neighbors: the dialog's window (its base size per tile-size setting,
@@ -19,8 +19,8 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 
-from .. import config
-from ..core.keyframes import (keyframe_timestamp, thumbnail_disk_path, thumbnail_url,
+from ... import config
+from ...core.keyframes import (keyframe_timestamp, thumbnail_disk_path, thumbnail_url,
                               video_fps_for_video, video_url)
 
 router = APIRouter()

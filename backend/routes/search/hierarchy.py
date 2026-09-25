@@ -1,5 +1,5 @@
 """
-backend/routes/hierarchy.py -- Hierarchy Search endpoints. Two endpoints
+backend/routes/search/hierarchy.py -- Hierarchy Search endpoints. Two endpoints
 because step 3's drill-down is per-video and re-triggerable independently
 (seed-frame change, "Expand" button) without re-running step 1 -- the
 frontend caches each group's step-1 `frames` list from the initial search
@@ -13,11 +13,11 @@ from typing import List, Optional
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from .. import config
-from ..core.query import resolve_query
-from ..filters.lot import parse_lot_range
-from ..search.composite import hierarchy as hier_mod
-from .schemas import SearchScope
+from ... import config
+from ...core.query import resolve_query
+from ...filters.lot import parse_lot_range
+from ...search.composite import hierarchy as hier_mod
+from ..schemas import SearchScope
 
 router = APIRouter()
 

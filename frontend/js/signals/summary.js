@@ -2,9 +2,9 @@
 // frame-level: one result per video, so its "group by" groups by
 // collection (lot) instead of by video.
 
-import { searchSummary } from "../api.js";
+import { searchSummary } from "../core/api.js";
 import { makeTextSignalPanel } from "./_text_signal.js";
-import { settings, setGroupByUi } from "../settings.js";
+import { settings, setGroupByUi } from "../core/settings.js";
 
 const groupMode = () => settings.groupByVideo ? "collection" : null;
 

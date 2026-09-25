@@ -1,5 +1,5 @@
 """
-backend/routes/facets.py -- exposes the structured metadata facets
+backend/routes/search/facets.py -- exposes the structured metadata facets
 (backend/filters/metadata.py) so the frontend can build the "Metadata
 filter" dropdown without hardcoding subject/province lists that would go
 stale as more lots get extracted into AICData/extracted/metadata/*.csv.
@@ -7,7 +7,7 @@ stale as more lots get extracted into AICData/extracted/metadata/*.csv.
 
 from fastapi import APIRouter
 
-from ..filters import metadata as md
+from ...filters import metadata as md
 
 router = APIRouter()
 

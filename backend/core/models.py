@@ -99,7 +99,7 @@ def encode_text_siglip2(texts: list) -> np.ndarray:
 #
 # siglip2_long_query_note() reports when a query was over the window and what
 # was done about it -- worth surfacing either way, since the Elasticsearch
-# legs see the raw string regardless. See backend/routes/search.py and
+# legs see the raw string regardless. See backend/routes/search/signals.py and
 # trake.py's `warning` fields.
 # ---------------------------------------------------------------------------
 

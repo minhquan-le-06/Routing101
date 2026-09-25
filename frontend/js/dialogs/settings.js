@@ -1,14 +1,14 @@
 // frontend/js/dialogs/settings.js -- the ⚙ Settings dialog (display
-// preferences from ../settings.js, the sidebar's Top-K/V/G boxes, and the
+// preferences from ../core/settings.js, the sidebar's Top-K/V/G boxes, and the
 // backend's long-query chunking strategy).
 
-import { getSearchSettings, setSearchSettings } from "../api.js";
+import { getSearchSettings, setSearchSettings } from "../core/api.js";
 import {
     groupByUi, HOVER_ZOOM_MAX, HOVER_ZOOM_MIN, HOVER_ZOOM_STEP,
     QUERY_CHUNK_DEFAULT, QUERY_CHUNK_LABELS, queryChunk, setQueryChunkCache,
     SETTINGS_DEFAULTS, saveSettings, settings, TILE_SIZE_KEYS,
     TILE_SIZES, TOP_K_DEFAULT, TOP_V_DEFAULT,
-} from "../settings.js";
+} from "../core/settings.js";
 import { openDialog } from "./base.js";
 
 // Display settings dialog -- the ⚙ button in the sidebar's signal rows.

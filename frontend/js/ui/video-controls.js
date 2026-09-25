@@ -1,4 +1,4 @@
-// frontend/js/video-controls.js -- shared <video> element behavior used by
+// frontend/js/ui/video-controls.js -- shared <video> element behavior used by
 // every playback surface (openPlaybackDialog/openTrakePlaybackDialog in
 // dialogs/playback.js, and the TRAKE curation panel in export/curation.js): remembers the
 // viewer's last-used volume/playback speed across sessions (localStorage,

@@ -1,13 +1,13 @@
-// frontend/js/render.js -- renderThumb/renderActions/renderGrid. Every
+// frontend/js/ui/render.js -- renderThumb/renderActions/renderGrid. Every
 // signal calls renderGrid() with the same {video_id, n, rank, score_label,
 // score_val, text, thumbnail_url} shape backend/search/common.py's
 // df_to_results() produces -- one renderer for every signal.
 
-import { openNeighborsDialog } from "./dialogs/neighbors.js";
-import { openPlaybackDialog } from "./dialogs/playback.js";
-import { openExportDialog } from "./export/dialog.js";
-import { copyCollectionOnly, copyToScope } from "./state.js";
-import { settings } from "./settings.js";
+import { openNeighborsDialog } from "../dialogs/neighbors.js";
+import { openPlaybackDialog } from "../dialogs/playback.js";
+import { openExportDialog } from "../export/dialog.js";
+import { copyCollectionOnly, copyToScope } from "../core/state.js";
+import { settings } from "../core/settings.js";
 
 function videoLotStr(videoId) {
     const m = /^L(\d+)/i.exec(videoId);

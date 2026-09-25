@@ -146,7 +146,7 @@ def video_fps_for_video(video_id: str) -> float:
     """Any one row's fps for video_id -- map-keyframes stores the same fps
     on every row for a given video. Used to start TRAKE curation playback
     from a bare video_id, before any keyframe/timestamp is known yet.
-    Falls back to the same 25.0 default backend/routes/media.py already
+    Falls back to the same 25.0 default backend/routes/results/media.py already
     uses when a specific frame's fps can't be resolved."""
     mk = load_map_keyframes(video_id)
     if mk is None or mk.empty:

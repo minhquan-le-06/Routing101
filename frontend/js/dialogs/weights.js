@@ -4,7 +4,7 @@
 import {
     MIXED_DEFAULT_LEGS, MIXED_DEFAULT_WEIGHTS, MIXED_LEG_DEFS, MIXED_SIGNAL_NAMES,
     mixedConfig, saveMixedConfig,
-} from "../state.js";
+} from "../core/state.js";
 import { openDialog } from "./base.js";
 
 // "Change weights" dialog. Edits a staged copy so Cancel discards changes;

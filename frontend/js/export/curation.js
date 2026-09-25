@@ -5,9 +5,9 @@
 // (answers.js); `kind` ("trake" | "native") picks the state bucket and DOM
 // ids a call operates on.
 
-import { getExportFrame, getPlayback } from "../api.js";
-import { fmtTime } from "../util.js";
-import { applyVideoPrefs, bindSpeedShortcut } from "../video-controls.js";
+import { getExportFrame, getPlayback } from "../core/api.js";
+import { fmtTime } from "../core/util.js";
+import { applyVideoPrefs, bindSpeedShortcut } from "../ui/video-controls.js";
 
 // `ctx` is buildExportUI()'s shared context (see ui.js): the state `s`, the
 // `el` DOM lookup, the status banner, and renderTypeVisibility.

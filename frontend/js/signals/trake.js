@@ -1,13 +1,13 @@
 // frontend/js/signals/trake.js -- TRAKE signal panel: the sidebar (context
 // row E0 + dynamic event rows E1..En with add/remove) and result cards.
 
-import { searchTrake } from "../api.js";
+import { searchTrake } from "../core/api.js";
 import { openTrakePlaybackDialog } from "../dialogs/playback.js";
 import { openWeightsDialog } from "../dialogs/weights.js";
 import { openExportDialog } from "../export/dialog.js";
-import { signalSelectHtml } from "../util.js";
-import { copyToScope, mixedConfig, resetExportCandidates, scopeFilters, trakeState, TRAKE_EVENT_SIGNALS } from "../state.js";
-import { setGroupByUi } from "../settings.js";
+import { signalSelectHtml } from "../core/util.js";
+import { copyToScope, mixedConfig, resetExportCandidates, scopeFilters, trakeState, TRAKE_EVENT_SIGNALS } from "../core/state.js";
+import { setGroupByUi } from "../core/settings.js";
 
 const trakeSection = document.getElementById("trake-query-section");
 const standardSection = document.getElementById("standard-query-section");

@@ -13,7 +13,7 @@ resulting per-signal rank lists are then combined with a weighted RRF,
 keyed on (video_id, n) since every signal is normalized to that shape
 already.
 
-The standalone "Mixed" tab (`backend/routes/search.py::search_mixed`) no
+The standalone "Mixed" tab (`backend/routes/search/signals.py::search_mixed`) no
 longer uses `_mixed_*_df` below -- it moved to many independent
 single-signal sub-queries (see that route's own docstring) -- but does
 reuse the same weighted RRF (search/common.py's rrf_fuse with `weights`),

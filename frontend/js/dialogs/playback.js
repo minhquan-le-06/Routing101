@@ -4,10 +4,10 @@
 // plus coverage gaps). Both have a live time/frame readout and an "Export
 // this frame" button that hands the exact playing frame to the Export tab.
 
-import { getPlayback } from "../api.js";
+import { getPlayback } from "../core/api.js";
 import { openExportDialog } from "../export/dialog.js";
-import { fmtTime } from "../util.js";
-import { applyVideoPrefs, bindSpeedShortcut, captureVideoThumbnail } from "../video-controls.js";
+import { fmtTime } from "../core/util.js";
+import { applyVideoPrefs, bindSpeedShortcut, captureVideoThumbnail } from "../ui/video-controls.js";
 import { openDialog } from "./base.js";
 
 export async function openPlaybackDialog(videoId, n) {

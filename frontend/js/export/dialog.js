@@ -16,7 +16,7 @@
 //   {kind: "flat", video_id, n}   -- any non-TRAKE signal's result card
 //   {kind: "trake", candidate}    -- a TRAKE candidate card
 
-import "../state.js"; // side-effect only -- ensures window.__routing101 exists before the click below
+import "../core/state.js"; // side-effect only -- ensures window.__routing101 exists before the click below
 
 export function openExportDialog(trigger) {
     const id = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;

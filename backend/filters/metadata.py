@@ -10,7 +10,7 @@ reference/fuzzy-search use, not wired in here.
 
 Same call shape as backend/filters/objects.py: an AND post-filter applied after a
 leg's own ranking, right alongside apply_filters (video/lot scope) in
-backend/routes/search.py, since this is exactly that -- a third scope
+backend/routes/search/signals.py, since this is exactly that -- a third scope
 dimension, just video-level metadata instead of video_id/lot-number. Unlike
 od_filter, an empty result here is left empty rather than falling back to
 unfiltered: od_filter's fuzzy per-frame class match can plausibly miss

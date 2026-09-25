@@ -1,5 +1,5 @@
 """
-backend/routes/trake.py -- TRAKE endpoint, on top of
+backend/routes/search/trake.py -- TRAKE endpoint, on top of
 backend/search/composite/trake.py's ranking logic. Each
 candidate's matched events carry a thumbnail_url (frontend renders them
 directly, same shape convention as everywhere else) and their own
@@ -13,12 +13,12 @@ from typing import Dict, List, Literal, Optional
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from .. import config
-from ..core.keyframes import thumbnail_url
-from ..core.models import get_query_chunk_strategy, siglip2_long_query_tokens
-from ..filters.lot import parse_lot_range
-from ..search.composite import trake as trake_mod
-from .schemas import SearchScope
+from ... import config
+from ...core.keyframes import thumbnail_url
+from ...core.models import get_query_chunk_strategy, siglip2_long_query_tokens
+from ...filters.lot import parse_lot_range
+from ...search.composite import trake as trake_mod
+from ..schemas import SearchScope
 
 router = APIRouter()
 

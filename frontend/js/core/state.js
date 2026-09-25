@@ -1,4 +1,4 @@
-// frontend/js/state.js -- client-side state: plain in-memory JS, scoped to
+// frontend/js/core/state.js -- client-side state: plain in-memory JS, scoped to
 // the page session, reset on reload (except mixedConfig, persisted below).
 
 export const state = {

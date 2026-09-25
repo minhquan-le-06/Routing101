@@ -3,9 +3,9 @@
 // come first and are on by default, SigLIP2/RRF off. Exact is ASR-only --
 // Caption/Summary use the factory's default three.
 
-import { searchAsr } from "../api.js";
+import { searchAsr } from "../core/api.js";
 import { makeTextSignalPanel } from "./_text_signal.js";
-import { settings } from "../settings.js";
+import { settings } from "../core/settings.js";
 
 const groupMode = () => settings.groupByVideo ? "video" : null;
 

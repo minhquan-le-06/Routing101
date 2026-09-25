@@ -1,10 +1,10 @@
-// frontend/js/facets.js -- populates the sidebar's "Metadata filter"
+// frontend/js/ui/facets.js -- populates the sidebar's "Metadata filter"
 // field/value dropdowns from GET /api/facets (backend/filters/metadata.py)
 // and wires the field -> value cascade. Values come from the server rather
 // than being hardcoded here so a newly-extracted lot's facet just shows up
 // on next page load, no frontend change needed.
 
-import { getFacets } from "./api.js";
+import { getFacets } from "../core/api.js";
 
 const fieldEl = document.getElementById("facet-field");
 const valueEl = document.getElementById("facet-value");

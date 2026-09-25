@@ -59,7 +59,7 @@
 // context object, built in dependency order below; state.js holds the
 // state shape and pure helpers.
 
-import { exportCsv, getExportFrame, getExportNearestKeyframe, writeTrakeCsv } from "../api.js";
+import { exportCsv, getExportFrame, getExportNearestKeyframe, writeTrakeCsv } from "../core/api.js";
 import { createAnswers } from "./answers.js";
 import { createCuration } from "./curation.js";
 import { freshState, previewPage } from "./state.js";

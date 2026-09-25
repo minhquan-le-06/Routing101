@@ -1,7 +1,7 @@
 """
 backend/core/query.py -- picture-query store + the request-to-query
 resolver every search route shares. The frontend posts a pasted/uploaded
-image once (backend/routes/query_image.py), gets back a short-lived
+image once (backend/routes/search/query_image.py), gets back a short-lived
 `image_id`, then passes that id (instead of `query` text) to any search
 endpoint; `resolve_query()` turns a request body's `query`/`image_id` into
 the str-or-PIL.Image object every search_* function expects.
